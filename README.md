@@ -1,0 +1,2 @@
+# glg
+Go logic generator
