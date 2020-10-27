@@ -43,4 +43,7 @@ func init() {
 	// is called directly, e.g.:
 	moduleCmd.Flags().StringP("file", "f", "", "Source file name, that contain types")
 	moduleCmd.Flags().StringP("name", "n", "", "Module name")
+
+	cobra.MarkFlagRequired(moduleCmd.Flags(), "file")
+	cobra.MarkFlagRequired(moduleCmd.Flags(), "name")
 }
