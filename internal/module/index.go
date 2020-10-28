@@ -1,9 +1,21 @@
 package module
 
-func Run(fName, mName, oDirName string) {
-	ns := Parse(fName, mName)
+import (
+	"fmt"
+	"github.com/rendau/glg/internal/util"
+	"path/filepath"
+)
 
-	DbMake(ns, oDirName)
+func Run(name string) {
+	fPath := filepath.Join("internal", "domain", "entities", name+".go")
+	if !util.IsFileExists(fPath) {
+		_ = fmt.Errorf("file %s does not exists", fPath)
+		return
+	}
+
+	// ns := Parse(fName, mName)
+	//
+	// DbMake(ns, oDirName)
 
 	// fmt.Println(ns.Name)
 	// if ns.MainSt != nil {

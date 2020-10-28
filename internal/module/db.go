@@ -15,6 +15,7 @@ func DbMake(ns *NsSt, oDirPath string) {
 
 	t = t.Funcs(template.FuncMap{
 		"ToLower": strings.ToLower,
+		"inc":     func(x int) int { return x + 1 },
 	})
 
 	t, err = t.ParseFiles("./templates/db.tmp")

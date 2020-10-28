@@ -12,22 +12,12 @@ var moduleCmd = &cobra.Command{
 	Short: "Generates whole module",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		f, err := cmd.Flags().GetString("file")
-		if err != nil {
-			log.Fatalln("Bad value for file-flag", err)
-		}
-
 		n, err := cmd.Flags().GetString("name")
 		if err != nil {
 			log.Fatalln("Bad value for name-flag", err)
 		}
 
-		o, err := cmd.Flags().GetString("out-dir")
-		if err != nil {
-			log.Fatalln("Bad value for out-dir-flag", err)
-		}
-
-		module.Run(f, n, o)
+		module.Run(n)
 	},
 }
 
@@ -42,11 +32,7 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	moduleCmd.Flags().StringP("file", "f", "", "Source file name, that contain types")
 	moduleCmd.Flags().StringP("name", "n", "", "Module name")
-	moduleCmd.Flags().StringP("out-dir", "o", "", "Output directory path")
 
-	cobra.MarkFlagRequired(moduleCmd.Flags(), "file")
 	cobra.MarkFlagRequired(moduleCmd.Flags(), "name")
-	cobra.MarkFlagRequired(moduleCmd.Flags(), "out-dir")
 }

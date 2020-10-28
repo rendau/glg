@@ -13,7 +13,7 @@ func (d *St) {{ .Ns.Name }}Get(ctx context.Context, id int64) (*entities.{{ .Ns.
 	pgArr := &pgtype.TextArray{}
 	err := con.QueryRowxContext(ctx, `
 		select {{ range $i, $field := .Ns.MainSt.Fields }}
-            t.{{ $field.JsonName }}{{ if lt $i (len $.Ns.MainSt.Fields) }},{{ end }}{{ end }}
+            t.{{ $field.JsonName }}{{ if lt (inc $i) (len $.Ns.MainSt.Fields) }},{{ end }}{{ end }}
 		from {{ .Ns.Name | ToLower }} t
 		where t.id = $1
 	`, id).Scan(
