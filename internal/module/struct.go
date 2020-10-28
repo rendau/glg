@@ -11,7 +11,8 @@ type StructSt struct {
 }
 
 type FieldSt struct {
-	Name string
-	Type string
-	Tag  string
+	Name     string
+	Type     string
+	Tag      string
+	JsonName string
 }

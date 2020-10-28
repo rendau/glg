@@ -6,10 +6,15 @@ import (
 	"go/parser"
 	"go/token"
 	"log"
+	"regexp"
 	"strings"
 )
 
-func Run(fName, mName string) error {
+var (
+	jsonTagRegexp = regexp.MustCompile(`(?iU)json:"(.*)"`)
+)
+
+func Run(fName, mName string) {
 	fSet := token.NewFileSet()
 
 	f, err := parser.ParseFile(fSet, fName, nil, 0)
@@ -17,10 +22,7 @@ func Run(fName, mName string) error {
 		log.Panicln("Fail to parse file", err)
 	}
 
-	ns, err := ParseF(f, mName)
-	if err != nil {
-		log.Panicln("Fail to parse file", err)
-	}
+	ns := ParseF(f, mName)
 
 	fmt.Println(ns.Name)
 	if ns.MainSt != nil {
@@ -35,105 +37,98 @@ func Run(fName, mName string) error {
 			fmt.Println("  ", *f)
 		}
 	}
-
-	return nil
 }
 
-func ParseF(f *ast.File, mName string) (*NsSt, error) {
+func ParseF(f *ast.File, mName string) *NsSt {
 	result := &NsSt{
 		Name: mName,
 	}
 
 	for _, decl := range f.Decls {
-		switch decl := decl.(type) {
+		switch gDecl := decl.(type) {
 		case *ast.GenDecl:
-			if decl.Tok != token.TYPE || len(decl.Specs) != 1 {
-				continue
-			}
-			tSpec := decl.Specs[0].(*ast.TypeSpec)
-			switch decl := tSpec.Type.(type) {
-			case *ast.StructType:
-				err := ParseSt(result, tSpec.Name.Name, decl)
-				if err != nil {
-					return nil, err
-				}
+			if gDecl.Tok == token.TYPE && len(gDecl.Specs) == 1 {
+				tSpec := gDecl.Specs[0].(*ast.TypeSpec)
+				ParseSt(result, tSpec.Name.Name, tSpec.Type)
 			}
 		}
 	}
 
-	return result, nil
+	return result
 }
 
-func ParseSt(ns *NsSt, name string, s *ast.StructType) error {
-	nameLower := strings.ToLower(name)
-	mNameLower := strings.ToLower(ns.Name)
+func ParseSt(ns *NsSt, name string, expr ast.Expr) {
+	switch decl := expr.(type) {
+	case *ast.StructType:
+		nameLower := strings.ToLower(name)
+		mNameLower := strings.ToLower(ns.Name)
 
-	var stInst *StructSt
+		var stInst *StructSt
 
-	switch {
-	case nameLower == mNameLower+"st":
-		ns.MainSt = &StructSt{}
-		stInst = ns.MainSt
-	case nameLower == mNameLower+"cust":
-		ns.CuSt = &StructSt{}
-		stInst = ns.CuSt
-	default:
-		return nil
-	}
-
-	for _, f := range s.Fields.List {
-		field, err := ParseFld(f)
-		if err != nil {
-			return err
+		switch {
+		case nameLower == mNameLower+"st":
+			ns.MainSt = &StructSt{}
+			stInst = ns.MainSt
+		case nameLower == mNameLower+"cust":
+			ns.CuSt = &StructSt{}
+			stInst = ns.CuSt
+		default:
+			return
 		}
-		if field != nil {
-			stInst.Fields = append(stInst.Fields, field)
+
+		for _, f := range decl.Fields.List {
+			field := ParseField(f)
+			if field != nil {
+				stInst.Fields = append(stInst.Fields, field)
+			}
 		}
 	}
-
-	return nil
 }
 
-func ParseFld(f *ast.Field) (*FieldSt, error) {
-	var err error
-
+func ParseField(f *ast.Field) *FieldSt {
 	if len(f.Names) != 1 {
-		return nil, nil
+		return nil
 	}
 
 	result := &FieldSt{
 		Name: f.Names[0].Name,
 	}
 
-	result.Type, err = ParseType(f.Type)
-	if err != nil {
-		return nil, err
-	}
+	result.Type = ParseType(f.Type)
 
 	if f.Tag != nil {
 		result.Tag = f.Tag.Value
+		result.JsonName = ParseTagJson(result.Tag)
 	}
 
-	return result, nil
+	return result
 }
 
-func ParseType(expr ast.Expr) (string, error) {
+func ParseType(expr ast.Expr) string {
 	switch decl := expr.(type) {
 	case *ast.Ident:
-		return decl.Name, nil
+		return decl.Name
 	case *ast.StarExpr:
-		tp, err := ParseType(decl.X)
-		if err != nil {
-			return "", err
+		if tp := ParseType(decl.X); tp != "" {
+			return "*" + tp
 		}
-		return "*" + tp, nil
 	case *ast.ArrayType:
-		tp, err := ParseType(decl.Elt)
-		if err != nil {
-			return "", err
+		if tp := ParseType(decl.Elt); tp != "" {
+			return "[]" + tp
 		}
-		return "[]" + tp, nil
 	}
 
-	return "", nil
+	return ""
+}
+
+func ParseTagJson(tag string) string {
+	if fRes := jsonTagRegexp.FindStringSubmatch(tag); len(fRes) > 1 {
+		for _, w := range strings.Split(fRes[1], ",") {
+			if w == "" || w == "-" || w == "omitempty" {
+				continue
+			}
+			return w
+		}
+	}
+	return ""
 }

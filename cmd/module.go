@@ -4,7 +4,6 @@ import (
 	"github.com/rendau/glg/internal/module"
 	"github.com/spf13/cobra"
 	"log"
-	"os"
 )
 
 // moduleCmd represents the module command
@@ -23,10 +22,7 @@ var moduleCmd = &cobra.Command{
 			log.Fatalln("Bad value for name-flag", err)
 		}
 
-		err = module.Run(f, n)
-		if err != nil {
-			os.Exit(1)
-		}
+		module.Run(f, n)
 	},
 }
 
