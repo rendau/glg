@@ -22,7 +22,12 @@ var moduleCmd = &cobra.Command{
 			log.Fatalln("Bad value for name-flag", err)
 		}
 
-		module.Run(f, n)
+		o, err := cmd.Flags().GetString("out-dir")
+		if err != nil {
+			log.Fatalln("Bad value for out-dir-flag", err)
+		}
+
+		module.Run(f, n, o)
 	},
 }
 
@@ -39,7 +44,9 @@ func init() {
 	// is called directly, e.g.:
 	moduleCmd.Flags().StringP("file", "f", "", "Source file name, that contain types")
 	moduleCmd.Flags().StringP("name", "n", "", "Module name")
+	moduleCmd.Flags().StringP("out-dir", "o", "", "Output directory path")
 
 	cobra.MarkFlagRequired(moduleCmd.Flags(), "file")
 	cobra.MarkFlagRequired(moduleCmd.Flags(), "name")
+	cobra.MarkFlagRequired(moduleCmd.Flags(), "out-dir")
 }

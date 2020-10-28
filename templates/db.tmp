@@ -1,0 +1,34 @@
+package pg
+
+import (
+	"context"
+	"database/sql"
+)
+
+func (d *St) {{ .Ns.Name }}Get(ctx context.Context, id int64) (*entities.{{ .Ns.Name }}St, error) {
+	con := d.getCon(ctx)
+
+	result := &entities.{{ .Ns.Name }}St{}
+
+	pgArr := &pgtype.TextArray{}
+	err := con.QueryRowxContext(ctx, `
+		select {{ range $i, $field := .Ns.MainSt.Fields }}
+            t.{{ $field.JsonName }}{{ if lt $i (len $.Ns.MainSt.Fields) }},{{ end }}{{ end }}
+		from {{ .Ns.Name | ToLower }} t
+		where t.id = $1
+	`, id).Scan(
+		&result.Id,
+		&result.Name,
+		&result.Static,
+		pgArr,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		d.lg.Errorw(ErrMsg, err)
+		return nil, err
+	}
+
+	return result, nil
+}
