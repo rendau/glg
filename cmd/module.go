@@ -1,9 +1,10 @@
 package cmd
 
 import (
-	"github.com/rendau/glg/internal/module"
+	"github.com/rendau/glg/internal/cmd/module"
 	"github.com/spf13/cobra"
 	"log"
+	"os"
 )
 
 // moduleCmd represents the module command
@@ -18,6 +19,8 @@ var moduleCmd = &cobra.Command{
 		}
 
 		module.Run(n)
+
+		os.Exit(0)
 	},
 }
 

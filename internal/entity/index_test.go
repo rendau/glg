@@ -1,4 +1,4 @@
-package module
+package entity
 
 import (
 	"github.com/stretchr/testify/require"

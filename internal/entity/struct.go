@@ -1,9 +1,14 @@
-package module
+package entity
 
-type NsSt struct {
-	Name   string
+type St struct {
+	Name   NameSt
 	MainSt *StructSt
 	CuSt   *StructSt
+}
+
+type NameSt struct {
+	Camel string
+	Snake string
 }
 
 type StructSt struct {

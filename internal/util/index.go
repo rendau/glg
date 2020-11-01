@@ -12,7 +12,18 @@ var (
 
 func IsFileExists(path string) bool {
 	info, err := os.Stat(path)
-	return !os.IsNotExist(err) && !info.IsDir()
+	if err != nil {
+		return !os.IsNotExist(err)
+	}
+	return !info.IsDir()
+}
+
+func IsDirExists(path string) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		return !os.IsNotExist(err)
+	}
+	return info.IsDir()
 }
 
 func MkdirAll(path string) error {

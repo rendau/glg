@@ -1,10 +1,12 @@
-package module
+package entity
 
 import (
+	"github.com/rendau/glg/internal/util"
 	"go/ast"
 	"go/parser"
 	"go/token"
 	"log"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -13,20 +15,23 @@ var (
 	jsonTagRegexp = regexp.MustCompile(`(?iU)json:"(.*)"`)
 )
 
-func Parse(fName, mName string) *NsSt {
+func Parse(dirPath, name string) *St {
 	fSet := token.NewFileSet()
 
-	f, err := parser.ParseFile(fSet, fName, nil, 0)
+	f, err := parser.ParseFile(fSet, filepath.Join(dirPath, name+".go"), nil, 0)
 	if err != nil {
 		log.Panicln(err)
 	}
 
-	return ParseF(f, mName)
+	return ParseF(f, name)
 }
 
-func ParseF(f *ast.File, mName string) *NsSt {
-	result := &NsSt{
-		Name: mName,
+func ParseF(f *ast.File, name string) *St {
+	result := &St{
+		Name: NameSt{
+			Camel: util.CaseSnake2Camel(name),
+			Snake: name,
+		},
 	}
 
 	for _, decl := range f.Decls {
@@ -42,21 +47,21 @@ func ParseF(f *ast.File, mName string) *NsSt {
 	return result
 }
 
-func ParseSt(ns *NsSt, name string, expr ast.Expr) {
+func ParseSt(o *St, stName string, expr ast.Expr) {
 	switch decl := expr.(type) {
 	case *ast.StructType:
-		nameLower := strings.ToLower(name)
-		mNameLower := strings.ToLower(ns.Name)
+		nameLower := strings.ToLower(stName)
+		eNameLower := strings.ToLower(o.Name.Camel)
 
 		var stInst *StructSt
 
 		switch {
-		case nameLower == mNameLower+"st":
-			ns.MainSt = &StructSt{}
-			stInst = ns.MainSt
-		case nameLower == mNameLower+"cust":
-			ns.CuSt = &StructSt{}
-			stInst = ns.CuSt
+		case nameLower == eNameLower+"st":
+			o.MainSt = &StructSt{}
+			stInst = o.MainSt
+		case nameLower == eNameLower+"cust":
+			o.CuSt = &StructSt{}
+			stInst = o.CuSt
 		default:
 			return
 		}
