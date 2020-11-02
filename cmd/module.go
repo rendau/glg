@@ -13,12 +13,17 @@ var moduleCmd = &cobra.Command{
 	Short: "Generates whole module",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
+		d, err := cmd.Flags().GetString("dir")
+		if err != nil {
+			log.Fatalln("Bad value for dir-flag", err)
+		}
+
 		n, err := cmd.Flags().GetString("name")
 		if err != nil {
 			log.Fatalln("Bad value for name-flag", err)
 		}
 
-		module.Run(n)
+		module.Run(d, n)
 
 		os.Exit(0)
 	},
@@ -35,7 +40,8 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	moduleCmd.Flags().StringP("name", "n", "", "Module name")
+	moduleCmd.Flags().StringP("dir", "d", ".", "Project dir, default is .")
+	moduleCmd.Flags().StringP("name", "n", "", "Entity name (without 'St' suffix)")
 
 	cobra.MarkFlagRequired(moduleCmd.Flags(), "name")
 }

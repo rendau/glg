@@ -15,23 +15,27 @@ var (
 	jsonTagRegexp = regexp.MustCompile(`(?iU)json:"(.*)"`)
 )
 
-func Parse(dirPath, name string) *St {
+func GetName(name string) *NameSt {
+	return &NameSt{
+		Camel: util.Case2Camel(name),
+		Snake: util.Case2Snake(name),
+	}
+}
+
+func Parse(dirPath string, eName *NameSt) *St {
 	fSet := token.NewFileSet()
 
-	f, err := parser.ParseFile(fSet, filepath.Join(dirPath, name+".go"), nil, 0)
+	f, err := parser.ParseFile(fSet, filepath.Join(dirPath, eName.Snake+".go"), nil, 0)
 	if err != nil {
 		log.Panicln(err)
 	}
 
-	return ParseF(f, name)
+	return ParseF(f, eName)
 }
 
-func ParseF(f *ast.File, name string) *St {
+func ParseF(f *ast.File, eName *NameSt) *St {
 	result := &St{
-		Name: NameSt{
-			Camel: util.CaseSnake2Camel(name),
-			Snake: name,
-		},
+		Name: eName,
 	}
 
 	for _, decl := range f.Decls {
@@ -39,7 +43,7 @@ func ParseF(f *ast.File, name string) *St {
 		case *ast.GenDecl:
 			if gDecl.Tok == token.TYPE && len(gDecl.Specs) == 1 {
 				tSpec := gDecl.Specs[0].(*ast.TypeSpec)
-				ParseSt(result, tSpec.Name.Name, tSpec.Type)
+				ParseSt(result, tSpec.Name.Name, eName, tSpec.Type)
 			}
 		}
 	}
@@ -47,11 +51,11 @@ func ParseF(f *ast.File, name string) *St {
 	return result
 }
 
-func ParseSt(o *St, stName string, expr ast.Expr) {
+func ParseSt(o *St, stName string, eName *NameSt, expr ast.Expr) {
 	switch decl := expr.(type) {
 	case *ast.StructType:
 		nameLower := strings.ToLower(stName)
-		eNameLower := strings.ToLower(o.Name.Camel)
+		eNameLower := strings.ToLower(eName.Camel)
 
 		var stInst *StructSt
 

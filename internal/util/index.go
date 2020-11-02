@@ -30,7 +30,7 @@ func MkdirAll(path string) error {
 	return os.MkdirAll(path, os.ModePerm)
 }
 
-func CaseSnake2Camel(v string) string {
+func Case2Camel(v string) string {
 	result := ""
 
 	for _, w := range strings.Split(v, "_") {
@@ -43,6 +43,6 @@ func CaseSnake2Camel(v string) string {
 	return result
 }
 
-func CaseCamel2Snake(v string) string {
+func Case2Snake(v string) string {
 	return strings.ToLower(camelCaseRegexp.ReplaceAllString(v, "${1}_${2}"))
 }

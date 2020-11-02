@@ -2,6 +2,11 @@ package project
 
 type St struct {
 	Uri             string
-	EntitiesDirPath string
-	DbDirPath       string
+	EntitiesDirPath *PathSt
+	DbDirPath       *PathSt
+}
+
+type PathSt struct {
+	Abs string
+	Rel string
 }

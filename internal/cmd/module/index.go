@@ -1,26 +1,25 @@
 package module
 
 import (
-	"fmt"
+	"github.com/rendau/glg/internal/cmd/db"
 	"github.com/rendau/glg/internal/entity"
 	"github.com/rendau/glg/internal/project"
+	"log"
 )
 
-func Run(name string) {
-	pr := project.Discover()
+func Run(dir, name string) {
+	pr := project.Discover(dir)
 
-	ent := entity.Parse(pr.EntitiesDirPath, name)
+	eName := entity.GetName(name)
 
-	if ent.MainSt != nil {
-		fmt.Println("MainSt:")
-		for _, f := range ent.MainSt.Fields {
-			fmt.Println("  ", *f)
-		}
+	if pr.EntitiesDirPath == nil {
+		log.Fatalln("entity file not found")
+		return
 	}
-	if ent.CuSt != nil {
-		fmt.Println("CuSt:")
-		for _, f := range ent.CuSt.Fields {
-			fmt.Println("  ", *f)
-		}
-	}
+
+	ent := entity.Parse(pr.EntitiesDirPath.Rel, eName)
+
+	// fmt.Println(ent)
+
+	db.Make(pr, eName, ent)
 }
