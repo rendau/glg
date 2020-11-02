@@ -20,7 +20,7 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 		return
 	}
 
-	tData, err := assets.Asset("templates/db.tmp")
+	tData, err := assets.Asset("templates/db.tmpl")
 	if err != nil {
 		log.Panicln(err)
 	}
@@ -40,15 +40,49 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 	defer outF.Close()
 
 	err = t.Execute(outF, struct {
-		Pr    *project.St
-		EName *entity.NameSt
-		Ent   *entity.St
+		Pr      *project.St
+		EName   *entity.NameSt
+		Ent     *entity.St
+		Ctx4Get map[string]interface{}
 	}{
-		Pr:    pr,
-		EName: eName,
-		Ent:   ent,
+		Pr:      pr,
+		EName:   eName,
+		Ent:     ent,
+		Ctx4Get: getCtx4Get(pr, eName, ent),
 	})
 	if err != nil {
 		log.Panicln(err)
 	}
+}
+
+func getCtx4Get(pr *project.St, eName *entity.NameSt, ent *entity.St) map[string]interface{} {
+	result := map[string]interface{}{}
+
+	result["scanableFields"] = scanableFields(ent.MainSt.Fields)
+
+	return result
+}
+
+func scanableFields(fields []*entity.FieldSt) []*entity.FieldSt {
+	result := make([]*entity.FieldSt, 0)
+
+	for _, f := range fields {
+		switch f.Type {
+		case "bool", "string":
+			result = append(result, f)
+		case "int", "int8", "int16", "int32", "int64":
+			result = append(result, f)
+		case "uint", "uint8", "uint16", "uint32", "uint64":
+			result = append(result, f)
+
+		case "[]bool", "[]string":
+			result = append(result, f)
+		case "[]int", "[]int8", "[]int16", "[]int32", "[]int64":
+			result = append(result, f)
+		case "[]uint", "[]uint8", "[]uint16", "[]uint32", "[]uint64":
+			result = append(result, f)
+		}
+	}
+
+	return result
 }

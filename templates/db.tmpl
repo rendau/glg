@@ -1,0 +1,59 @@
+package pg
+
+import (
+	"context"
+	"database/sql"
+    "github.com/jackc/pgtype"
+	{{- if .Pr.EntitiesDirPath }}
+	"{{ .Pr.Uri }}/{{ .Pr.EntitiesDirPath.Abs }}"
+	{{- end }}
+)
+
+{{ if and .Ctx4Get.scanableFields (len .Ctx4Get.scanableFields) }}
+func (d *St) {{ .EName.Camel }}Get(ctx context.Context, id int64) (*entities.{{ .EName.Camel }}St, error) {
+	con := d.getCon(ctx)
+
+	result := &entities.{{ .EName.Camel }}St{}
+
+	{{- range $field := .Ctx4Get.scanableFields }}
+	{{ if eq $field.Type "[]bool" -}}
+		pgArr{{ $field.Name }} := &pgtype.BoolArray{}
+	{{- else if eq $field.Type "[]string" -}}
+		pgArr{{ $field.Name }} := &pgtype.TextArray{}
+	{{- else if or (eq $field.Type "[]int") (eq $field.Type "[]int8") (eq $field.Type "[]int16") (eq $field.Type "[]int32") (eq $field.Type "[]int64") -}}
+		pgArr{{ $field.Name }} := &pgtype.Int8Array{}
+	{{- else if or (eq $field.Type "[]uint") (eq $field.Type "[]uint8") (eq $field.Type "[]uint16") (eq $field.Type "[]uint32") (eq $field.Type "[]uint64") -}}
+		pgArr{{ $field.Name }} := &pgtype.Int8Array{}
+	{{- end }}
+	{{- end }}
+
+	err := con.QueryRowxContext(ctx, `
+		select
+			{{- range $i, $field := .Ctx4Get.scanableFields }}
+			t.{{ $field.JsonName }}{{ if lt (inc $i) (len $.Ent.MainSt.Fields) }},{{ end }}
+			{{- end }}
+		from {{ .EName.Camel | ToLower }} t
+		where t.id = $1
+	`, id).Scan(
+		{{- range $field := .Ctx4Get.scanableFields }}
+		{{ if or (eq $field.Type "[]bool") (eq $field.Type "[]string") -}}
+			pgArr{{ $field.Name }},
+		{{- else if or (eq $field.Type "[]int") (eq $field.Type "[]int8") (eq $field.Type "[]int16") (eq $field.Type "[]int32") (eq $field.Type "[]int64") -}}
+			pgArr{{ $field.Name }},
+		{{- else if or (eq $field.Type "[]uint") (eq $field.Type "[]uint8") (eq $field.Type "[]uint16") (eq $field.Type "[]uint32") (eq $field.Type "[]uint64") -}}
+			pgArr{{ $field.Name }},
+		{{- else -}}
+			&result.{{ $field.Name }},
+		{{- end }}
+		{{- end }}
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, d.handleError(err)
+	}
+
+	return result, nil
+}
+{{ end }}

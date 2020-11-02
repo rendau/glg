@@ -1,6 +1,6 @@
 // Code generated for package assets by go-bindata DO NOT EDIT. (@generated)
 // sources:
-// templates/db.tmp
+// templates/db.tmpl
 package assets
 
 import (
@@ -25,10 +25,10 @@ type asset struct {
 	info  os.FileInfo
 }
 
-// templatesDbTmp reads file data from disk. It returns an error on failure.
-func templatesDbTmp() (*asset, error) {
-	path := "/Users/dauren/Documents/rendau/glg/templates/db.tmp"
-	name := "templates/db.tmp"
+// templatesDbTmpl reads file data from disk. It returns an error on failure.
+func templatesDbTmpl() (*asset, error) {
+	path := "/Users/dauren/Documents/rendau/glg/templates/db.tmpl"
+	name := "templates/db.tmpl"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -95,7 +95,7 @@ func AssetNames() []string {
 
 // _bindata is a table, holding each asset generator, mapped to its name.
 var _bindata = map[string]func() (*asset, error){
-	"templates/db.tmp": templatesDbTmp,
+	"templates/db.tmpl": templatesDbTmpl,
 }
 
 // AssetDir returns the file names below a certain
@@ -140,7 +140,7 @@ type bintree struct {
 
 var _bintree = &bintree{nil, map[string]*bintree{
 	"templates": &bintree{nil, map[string]*bintree{
-		"db.tmp": &bintree{templatesDbTmp, map[string]*bintree{}},
+		"db.tmpl": &bintree{templatesDbTmpl, map[string]*bintree{}},
 	}},
 }}
 
