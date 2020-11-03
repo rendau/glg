@@ -14,12 +14,11 @@ func (d *St) {{ .EName.Camel }}Get(ctx context.Context, id int64) (*entities.{{ 
     con := d.getCon(ctx)
 
     result := &entities.{{ .EName.Camel }}St{}
-{{ range $i, $field := .Ctx4Get.scanableFields -}}
-    {{ if fieldPgType $field }}
+{{ with (fieldsPgTypeFilter .Ctx4Get.scanableFields) }}
+    {{- range $i, $field := . }}
     pgArr{{ $field.Name }} := {{ fieldPgType $field }}{}
     {{- end }}
-{{- end }}
-
+{{ end }}
     err := con.QueryRowxContext(ctx, `
         select {{ range $i, $field := .Ctx4Get.scanableFields -}}
         {{ if gt $i 0 }}
@@ -27,8 +26,9 @@ func (d *St) {{ .EName.Camel }}Get(ctx context.Context, id int64) (*entities.{{ 
         {{- end }}
         from {{ .EName.Snake }} t
         where t.id = $1
-    `, id).Scan({{ range $field := .Ctx4Get.scanableFields -}}
-    {{ if fieldPgType $field }}
+    `, id).Scan(
+    {{- range $field := .Ctx4Get.scanableFields }}
+    {{- if fieldPgType $field }}
         &pgArr{{ $field.Name }},
     {{- else }}
         &result.{{ $field.Name }},
@@ -41,14 +41,13 @@ func (d *St) {{ .EName.Camel }}Get(ctx context.Context, id int64) (*entities.{{ 
         }
         return nil, d.handleError(err)
     }
-{{ range $i, $field := .Ctx4Get.scanableFields -}}
-    {{ if fieldPgType $field }}
+{{ with (fieldsPgTypeFilter .Ctx4Get.scanableFields) }}
+    {{- range $i, $field := . }}
     if err = pgArr{{ $field.Name }} .AssignTo(&result.{{ $field.Name }}); err != nil {
         return nil, d.handleError(err)
     }
     {{- end }}
-{{- end }}
-
+{{ end }}
     return result, nil
 }
 {{- end }}

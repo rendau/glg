@@ -25,8 +25,9 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 	}
 
 	t, err := template.New("db.tmp").Funcs(template.FuncMap{
-		"notLastI":    func(i, len int) bool { return (i + 1) < len },
-		"fieldPgType": fieldPgType,
+		"notLastI":           func(i, len int) bool { return (i + 1) < len },
+		"fieldPgType":        fieldPgType,
+		"fieldsPgTypeFilter": fieldsPgTypeFilter,
 	}).Parse(string(tData))
 	if err != nil {
 		log.Panicln(err)
@@ -98,4 +99,16 @@ func fieldPgType(field *entity.FieldSt) string {
 		return "pgtype.Int8Array"
 	}
 	return ""
+}
+
+func fieldsPgTypeFilter(fields []*entity.FieldSt) []*entity.FieldSt {
+	result := make([]*entity.FieldSt, 0)
+
+	for _, field := range fields {
+		if fieldPgType(field) != "" {
+			result = append(result, field)
+		}
+	}
+
+	return result
 }
