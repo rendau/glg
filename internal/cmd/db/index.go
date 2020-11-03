@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"text/template"
 )
 
@@ -26,8 +25,8 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 	}
 
 	t, err := template.New("db.tmp").Funcs(template.FuncMap{
-		"ToLower": strings.ToLower,
-		"inc":     func(x int) int { return x + 1 },
+		"notLastI":    func(i, len int) bool { return (i + 1) < len },
+		"fieldPgType": fieldPgType,
 	}).Parse(string(tData))
 	if err != nil {
 		log.Panicln(err)
@@ -85,4 +84,18 @@ func scanableFields(fields []*entity.FieldSt) []*entity.FieldSt {
 	}
 
 	return result
+}
+
+func fieldPgType(field *entity.FieldSt) string {
+	switch field.Type {
+	case "[]bool":
+		return "pgtype.BoolArray"
+	case "[]string":
+		return "pgtype.TextArray"
+	case "[]int", "[]int8", "[]int16", "[]int32", "[]int64":
+		return "pgtype.Int8Array"
+	case "[]uint", "[]uint8", "[]uint16", "[]uint32", "[]uint64":
+		return "pgtype.Int8Array"
+	}
+	return ""
 }
