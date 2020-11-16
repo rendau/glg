@@ -5,9 +5,11 @@ import (
 )
 
 type St struct {
-	Name   *NameSt
-	MainSt *StructSt
-	CuSt   *StructSt
+	Name       *NameSt
+	MainSt     *StructSt
+	ListSt     *StructSt
+	ListParsSt *StructSt
+	CuSt       *StructSt
 }
 
 type NameSt struct {
@@ -44,6 +46,18 @@ func (o *St) String() string {
 	if o.MainSt != nil {
 		result += "  " + eName + "St:\n"
 		for _, f := range o.MainSt.Fields {
+			result += fmt.Sprintln("    ", *f)
+		}
+	}
+	if o.ListSt != nil {
+		result += "  " + eName + "ListSt:\n"
+		for _, f := range o.ListSt.Fields {
+			result += fmt.Sprintln("    ", *f)
+		}
+	}
+	if o.ListParsSt != nil {
+		result += "  " + eName + "ListParsSt:\n"
+		for _, f := range o.ListParsSt.Fields {
 			result += fmt.Sprintln("    ", *f)
 		}
 	}

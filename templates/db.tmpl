@@ -27,13 +27,13 @@ func (d *St) {{ .EName.Camel }}Get(ctx context.Context, id int64) (*entities.{{ 
         from {{ .EName.Snake }} t
         where t.id = $1
     `, id).Scan(
-    {{- range $field := .Ctx4Get.scanableFields }}
+{{- range $field := .Ctx4Get.scanableFields }}
     {{- if fieldPgType $field }}
         &pgArr{{ $field.Name }},
     {{- else }}
         &result.{{ $field.Name }},
     {{- end }}
-    {{- end }}
+{{- end }}
     )
     if err != nil {
         if err == sql.ErrNoRows {
@@ -51,3 +51,66 @@ func (d *St) {{ .EName.Camel }}Get(ctx context.Context, id int64) (*entities.{{ 
     return result, nil
 }
 {{- end }}
+
+func (d *St) {{ .EName.Camel }}List(ctx context.Context, pars entities.{{ .EName.Camel }}ListParsSt) ([]*entities.{{ .EName.Camel }}ListSt, error) {
+	var err error
+
+	con := d.getCon(ctx)
+
+	qFrom := ` from {{ .EName.Snake }} t`
+	qWhere := ` where 1=1`
+	args := map[string]interface{}{}
+
+	// filter
+	if pars.Ids != nil {
+		qWhere += ` and r.id in (` + strings.Replace(strings.Trim(fmt.Sprint(pars.Ids), "[]"), " ", ",", -1) + `)`
+	}
+
+	qSelect := `
+		select {{ range $i, $field := .Ctx4List.scanableFields -}}
+		{{ if gt $i 0 }}
+			, {{ end }}t.{{ $field.JsonName }}
+		{{- end }}
+	`
+
+	qOrderBy := ` order by r.static desc, r.name`
+
+	stmt, err := con.PrepareNamed(
+		qSelect + qFrom + qWhere + qOrderBy,
+	)
+	if err != nil {
+		return nil, d.handleError(err)
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.QueryxContext(ctx, args)
+	if err != nil {
+		return nil, d.handleError(err)
+	}
+	defer rows.Close()
+
+	recs := make([]*entities.{{ .EName.Camel }}ListSt, 0)
+
+	for rows.Next() {
+		rec := &entities.{{ .EName.Camel }}ListSt{}
+		pgArrPerms := &pgtype.TextArray{}
+		err = rows.Scan(
+			&rec.Id,
+			&rec.Name,
+			&rec.Static,
+			pgArrPerms,
+		)
+		if err != nil {
+			return nil, d.handleError(err)
+		}
+		if err = pgArrPerms.AssignTo(&rec.Perms); err != nil {
+			return nil, d.handleError(err)
+		}
+		recs = append(recs, rec)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, d.handleError(err)
+	}
+
+	return recs, nil
+}

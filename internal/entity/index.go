@@ -63,6 +63,12 @@ func ParseSt(o *St, stName string, eName *NameSt, expr ast.Expr) {
 		case nameLower == eNameLower+"st":
 			o.MainSt = &StructSt{}
 			stInst = o.MainSt
+		case nameLower == eNameLower+"listst":
+			o.ListSt = &StructSt{}
+			stInst = o.ListSt
+		case nameLower == eNameLower+"listparsst":
+			o.ListParsSt = &StructSt{}
+			stInst = o.ListParsSt
 		case nameLower == eNameLower+"cust":
 			o.CuSt = &StructSt{}
 			stInst = o.CuSt
@@ -80,12 +86,10 @@ func ParseSt(o *St, stName string, eName *NameSt, expr ast.Expr) {
 }
 
 func ParseField(f *ast.Field) *FieldSt {
-	if len(f.Names) != 1 {
-		return nil
-	}
+	result := &FieldSt{}
 
-	result := &FieldSt{
-		Name: f.Names[0].Name,
+	if len(f.Names) == 1 {
+		result.Name = f.Names[0].Name
 	}
 
 	result.Type = ParseType(f.Type)

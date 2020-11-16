@@ -40,15 +40,17 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 	defer outF.Close()
 
 	err = t.Execute(outF, struct {
-		Pr      *project.St
-		EName   *entity.NameSt
-		Ent     *entity.St
-		Ctx4Get map[string]interface{}
+		Pr       *project.St
+		EName    *entity.NameSt
+		Ent      *entity.St
+		Ctx4Get  map[string]interface{}
+		Ctx4List map[string]interface{}
 	}{
-		Pr:      pr,
-		EName:   eName,
-		Ent:     ent,
-		Ctx4Get: getCtx4Get(pr, eName, ent),
+		Pr:       pr,
+		EName:    eName,
+		Ent:      ent,
+		Ctx4Get:  getCtx4Get(pr, eName, ent),
+		Ctx4List: getCtx4List(pr, eName, ent),
 	})
 	if err != nil {
 		log.Panicln(err)
@@ -59,6 +61,14 @@ func getCtx4Get(pr *project.St, eName *entity.NameSt, ent *entity.St) map[string
 	result := map[string]interface{}{}
 
 	result["scanableFields"] = scanableFields(ent.MainSt.Fields)
+
+	return result
+}
+
+func getCtx4List(pr *project.St, eName *entity.NameSt, ent *entity.St) map[string]interface{} {
+	result := map[string]interface{}{}
+
+	result["scanableFields"] = scanableFields(ent.ListSt.Fields)
 
 	return result
 }
