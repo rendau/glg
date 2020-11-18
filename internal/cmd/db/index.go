@@ -2,13 +2,17 @@ package db
 
 import (
 	"fmt"
-	"github.com/rendau/glg/assets"
-	"github.com/rendau/glg/internal/entity"
-	"github.com/rendau/glg/internal/project"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
+
+	"github.com/rendau/glg/internal/util"
+
+	"github.com/rendau/glg/assets"
+	"github.com/rendau/glg/internal/entity"
+	"github.com/rendau/glg/internal/project"
 )
 
 func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
@@ -27,13 +31,16 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 	t, err := template.New("db.tmp").Funcs(template.FuncMap{
 		"notLastI":           func(i, len int) bool { return (i + 1) < len },
 		"fieldPgType":        fieldPgType,
-		"fieldsPgTypeFilter": fieldsPgTypeFilter,
+		"parsFieldAssocName": parsFieldAssocName,
+		"fieldTupleGetter":   fieldTupleGetter,
 	}).Parse(string(tData))
 	if err != nil {
 		log.Panicln(err)
 	}
 
-	outF, err := os.Create(filepath.Join(pr.DbDirPath.Rel, eName.Snake+".go"))
+	fPath := filepath.Join(pr.DbDirPath.Rel, eName.Snake+".go")
+
+	outF, err := os.Create(fPath)
 	if err != nil {
 		log.Panicln(err)
 	}
@@ -55,6 +62,8 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 	if err != nil {
 		log.Panicln(err)
 	}
+
+	util.FmtFile(fPath)
 }
 
 func getCtx4Get(pr *project.St, eName *entity.NameSt, ent *entity.St) map[string]interface{} {
@@ -68,6 +77,15 @@ func getCtx4Get(pr *project.St, eName *entity.NameSt, ent *entity.St) map[string
 func getCtx4List(pr *project.St, eName *entity.NameSt, ent *entity.St) map[string]interface{} {
 	result := map[string]interface{}{}
 
+	for _, field := range ent.ListSt.Fields {
+		if strings.Contains(strings.ToLower(field.Type), "pagination") {
+			result["hasPagination"] = true
+			break
+		}
+	}
+
+	result["parsFields"] = ent.ListParsSt.Fields
+	result["fields"] = ent.ListSt.Fields
 	result["scanableFields"] = scanableFields(ent.ListSt.Fields)
 
 	return result
@@ -111,14 +129,42 @@ func fieldPgType(field *entity.FieldSt) string {
 	return ""
 }
 
-func fieldsPgTypeFilter(fields []*entity.FieldSt) []*entity.FieldSt {
-	result := make([]*entity.FieldSt, 0)
+func parsFieldAssocName(ent *entity.St, field *entity.FieldSt) string {
+	if strings.ToLower(field.Name) == "ids" {
+		return "id"
+	}
 
-	for _, field := range fields {
-		if fieldPgType(field) != "" {
-			result = append(result, field)
+	if ent.MainSt != nil {
+		for _, f := range ent.MainSt.Fields {
+			if f.Name == field.Name {
+				return f.JsonName
+			}
 		}
 	}
 
-	return result
+	if ent.ListSt != nil {
+		for _, f := range ent.ListSt.Fields {
+			if f.Name == field.Name {
+				return f.JsonName
+			}
+		}
+	}
+
+	return ""
+}
+
+func fieldTupleGetter(field *entity.FieldSt, oName string) string {
+	switch field.Type {
+	case "[]string":
+		return `strings.Replace(strings.TrimSpace(strings.Join(` + oName + `.` + field.Name + `, " ") + " null"), " ", ",", -1)`
+	case "*[]string":
+		return `strings.Replace(strings.TrimSpace(strings.Join(*` + oName + `.` + field.Name + `, " ") + " null"), " ", ",", -1)`
+	case "[]int", "[]int8", "[]int16", "[]int32", "[]int64",
+		"[]uint", "[]uint8", "[]uint16", "[]uint32", "[]uint64":
+		return `strings.Replace(strings.TrimSpace(strings.Trim(fmt.Sprint(` + oName + `.` + field.Name + `), "[]") + " null"), " ", ",", -1)`
+	case "*[]int", "*[]int8", "*[]int16", "*[]int32", "*[]int64",
+		"*[]uint", "*[]uint8", "*[]uint16", "*[]uint32", "*[]uint64":
+		return `strings.Replace(strings.TrimSpace(strings.Trim(fmt.Sprint(*` + oName + `.` + field.Name + `), "[]") + " null"), " ", ",", -1)`
+	}
+	return ""
 }

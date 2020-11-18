@@ -22,10 +22,11 @@ type StructSt struct {
 }
 
 type FieldSt struct {
-	Name     string
-	Type     string
-	Tag      string
-	JsonName string
+	Name          string
+	Type          string
+	IsTypePointer bool
+	Tag           string
+	JsonName      string
 }
 
 func (o *St) String() string {

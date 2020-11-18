@@ -1,7 +1,6 @@
 package entity
 
 import (
-	"github.com/rendau/glg/internal/util"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -9,6 +8,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/rendau/glg/internal/util"
 )
 
 var (
@@ -93,6 +94,8 @@ func ParseField(f *ast.Field) *FieldSt {
 	}
 
 	result.Type = ParseType(f.Type)
+
+	result.IsTypePointer = strings.HasPrefix(result.Type, "*")
 
 	if f.Tag != nil {
 		result.Tag = f.Tag.Value

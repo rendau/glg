@@ -1,7 +1,9 @@
 package util
 
 import (
+	"fmt"
 	"os"
+	"os/exec"
 	"regexp"
 	"strings"
 )
@@ -45,4 +47,16 @@ func Case2Camel(v string) string {
 
 func Case2Snake(v string) string {
 	return strings.ToLower(camelCaseRegexp.ReplaceAllString(v, "${1}_${2}"))
+}
+
+func FmtFile(fPath string) {
+	err := exec.Command("goimports", "-w", fPath).Run()
+	if err != nil {
+		fmt.Println("Fail to 'goimports'", fPath, err)
+
+		err = exec.Command("gofmt", "-w", fPath).Run()
+		if err != nil {
+			fmt.Println("Fail to 'gofmt'", fPath, err)
+		}
+	}
 }
