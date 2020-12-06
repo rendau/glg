@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -8,20 +9,11 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-
-	"github.com/rendau/glg/internal/util"
 )
 
 var (
 	jsonTagRegexp = regexp.MustCompile(`(?iU)json:"(.*)"`)
 )
-
-func GetName(name string) *NameSt {
-	return &NameSt{
-		Camel: util.Case2Camel(name),
-		Snake: util.Case2Snake(name),
-	}
-}
 
 func Parse(dirPath string, eName *NameSt) *St {
 	fSet := token.NewFileSet()
@@ -90,12 +82,15 @@ func ParseField(f *ast.Field) *FieldSt {
 	result := &FieldSt{}
 
 	if len(f.Names) == 1 {
-		result.Name = f.Names[0].Name
+		result.Name.Origin = f.Names[0].Name
+		result.Name.Normalize()
+		fmt.Print(result.Name)
 	}
 
 	result.Type = ParseType(f.Type)
 
 	result.IsTypePointer = strings.HasPrefix(result.Type, "*")
+	result.IsTypeSlice = strings.HasPrefix(result.Type, "[]") || strings.HasPrefix(result.Type, "*[]")
 
 	if f.Tag != nil {
 		result.Tag = f.Tag.Value

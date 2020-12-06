@@ -11,17 +11,9 @@ import (
 
 {{ if and .Ctx4Get.scanableFields (len .Ctx4Get.scanableFields) -}}
 func (d *St) {{ .EName.Camel }}Get(ctx context.Context, id int64) (*entities.{{ .EName.Camel }}St, error) {
-    con := d.getCon(ctx)
-
     result := &entities.{{ .EName.Camel }}St{}
 
-    {{ range $field := .Ctx4Get.scanableFields }}
-        {{- if fieldPgType $field }}
-            pgArr{{ $field.Name }} := {{ fieldPgType $field }}{}
-        {{- end }}
-    {{- end }}
-
-    err := con.QueryRowxContext(ctx, `
+    err := d.DbQueryRow(ctx, `
         select {{ range $i, $field := .Ctx4Get.scanableFields -}}
         {{ if gt $i 0 }}
              , {{ end }}t.{{ $field.JsonName }}
@@ -30,27 +22,15 @@ func (d *St) {{ .EName.Camel }}Get(ctx context.Context, id int64) (*entities.{{ 
         where t.id = $1
     `, id).Scan(
     {{- range $field := .Ctx4Get.scanableFields }}
-        {{- if fieldPgType $field }}
-            &pgArr{{ $field.Name }},
-        {{- else }}
-            &result.{{ $field.Name }},
-        {{- end }}
+        &result.{{ $field.Name.Origin }},
     {{- end }}
     )
     if err != nil {
-        if err == sql.ErrNoRows {
+        if err == pgx.ErrNoRows {
             return nil, nil
         }
-        return nil, d.handleError(err)
+        return nil, d.handleError(ctx, err)
     }
-
-    {{ range $field := .Ctx4Get.scanableFields }}
-        {{- if fieldPgType $field }}
-            if err = pgArr{{ $field.Name }} .AssignTo(&result.{{ $field.Name }}); err != nil {
-                return nil, d.handleError(err)
-            }
-        {{- end }}
-    {{- end }}
 
     return result, nil
 }
@@ -58,8 +38,6 @@ func (d *St) {{ .EName.Camel }}Get(ctx context.Context, id int64) (*entities.{{ 
 
 func (d *St) {{ .EName.Camel }}List(ctx context.Context, pars entities.{{ .EName.Camel }}ListParsSt) ([]*entities.{{ .EName.Camel }}ListSt, error) {
     var err error
-
-    con := d.getCon(ctx)
 
     qFrom := ` from {{ .EName.Snake }} t`
     qWhere := ` where 1=1`
@@ -70,22 +48,22 @@ func (d *St) {{ .EName.Camel }}List(ctx context.Context, pars entities.{{ .EName
     var tCount int64
 
     // filter
-    {{- range $field := .Ctx4List.parsFields }}
-        {{- if $field.IsTypePointer }}
-            {{- if parsFieldAssocName $.Ent $field }}
-                {{- if fieldTupleGetter $field "pars" }}
-                    if pars.{{ $field.Name }} != nil {
-                        qWhere += ` and t.{{ parsFieldAssocName $.Ent $field }} in (` + {{ fieldTupleGetter $field "pars" }} + `)`
-                    }
-                {{- else }}
-                    if pars.{{ $field.Name }} != nil {
-                        qWhere += ` and t.{{ parsFieldAssocName $.Ent $field }} = :{{ parsFieldAssocName $.Ent $field }}`
-                        args["{{ parsFieldAssocName $.Ent $field }}"] = *pars.{{ $field.Name }}
-                    }
-                {{- end }}
-            {{- end }}
-        {{- end }}
-    {{- end }}
+{{/*    {{- range $field := .Ctx4List.parsFields }}*/}}
+{{/*        {{- if $field.IsTypePointer }}*/}}
+{{/*            {{- if parsFieldAssocName $.Ent $field }}*/}}
+{{/*                {{- if fieldTupleGetter $field "pars" }}*/}}
+{{/*                    if pars.{{ $field.Name }} != nil {*/}}
+{{/*                        qWhere += ` and t.{{ parsFieldAssocName $.Ent $field }} in (` + {{ fieldTupleGetter $field "pars" }} + `)`*/}}
+{{/*                    }*/}}
+{{/*                {{- else }}*/}}
+{{/*                    if pars.{{ $field.Name }} != nil {*/}}
+{{/*                        qWhere += ` and t.{{ parsFieldAssocName $.Ent $field }} = :{{ parsFieldAssocName $.Ent $field }}`*/}}
+{{/*                        args["{{ parsFieldAssocName $.Ent $field }}"] = *pars.{{ $field.Name }}*/}}
+{{/*                    }*/}}
+{{/*                {{- end }}*/}}
+{{/*            {{- end }}*/}}
+{{/*        {{- end }}*/}}
+{{/*    {{- end }}*/}}
 
     qSelect := `
         select {{ range $i, $field := .Ctx4List.scanableFields -}}

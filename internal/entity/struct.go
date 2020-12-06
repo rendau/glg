@@ -2,6 +2,8 @@ package entity
 
 import (
 	"fmt"
+
+	"github.com/rendau/glg/internal/util"
 )
 
 type St struct {
@@ -13,8 +15,9 @@ type St struct {
 }
 
 type NameSt struct {
-	Camel string
-	Snake string
+	Origin string
+	Camel  string
+	Snake  string
 }
 
 type StructSt struct {
@@ -22,11 +25,22 @@ type StructSt struct {
 }
 
 type FieldSt struct {
-	Name          string
+	Name          NameSt
 	Type          string
 	IsTypePointer bool
+	IsTypeSlice   bool
 	Tag           string
 	JsonName      string
+}
+
+func (o *NameSt) Normalize() {
+	if o.Origin != "" {
+		o.Camel = util.Case2Camel(o.Origin)
+		o.Snake = util.Case2Snake(o.Origin)
+	} else {
+		o.Camel = ""
+		o.Snake = ""
+	}
 }
 
 func (o *St) String() string {

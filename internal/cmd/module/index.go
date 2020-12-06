@@ -1,16 +1,18 @@
 package module
 
 import (
+	"log"
+
 	"github.com/rendau/glg/internal/cmd/db"
 	"github.com/rendau/glg/internal/entity"
 	"github.com/rendau/glg/internal/project"
-	"log"
 )
 
 func Run(dir, name string) {
 	pr := project.Discover(dir)
 
-	eName := entity.GetName(name)
+	eName := &entity.NameSt{Origin: name}
+	eName.Normalize()
 
 	if pr.EntitiesDirPath == nil {
 		log.Fatalln("entity file not found")

@@ -29,10 +29,8 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 	}
 
 	t, err := template.New("db.tmp").Funcs(template.FuncMap{
-		"notLastI":           func(i, len int) bool { return (i + 1) < len },
-		"fieldPgType":        fieldPgType,
 		"parsFieldAssocName": parsFieldAssocName,
-		"fieldTupleGetter":   fieldTupleGetter,
+		"fieldSubQueryForIn": fieldSubQueryForIn,
 	}).Parse(string(tData))
 	if err != nil {
 		log.Panicln(err)
@@ -115,28 +113,14 @@ func scanableFields(fields []*entity.FieldSt) []*entity.FieldSt {
 	return result
 }
 
-func fieldPgType(field *entity.FieldSt) string {
-	switch field.Type {
-	case "[]bool":
-		return "pgtype.BoolArray"
-	case "[]string":
-		return "pgtype.TextArray"
-	case "[]int", "[]int8", "[]int16", "[]int32", "[]int64":
-		return "pgtype.Int8Array"
-	case "[]uint", "[]uint8", "[]uint16", "[]uint32", "[]uint64":
-		return "pgtype.Int8Array"
-	}
-	return ""
-}
-
 func parsFieldAssocName(ent *entity.St, field *entity.FieldSt) string {
-	if strings.ToLower(field.Name) == "ids" {
+	if strings.ToLower(field.Name.Snake) == "ids" {
 		return "id"
 	}
 
 	if ent.MainSt != nil {
 		for _, f := range ent.MainSt.Fields {
-			if f.Name == field.Name {
+			if f.Name.Camel == field.Name.Camel {
 				return f.JsonName
 			}
 		}
@@ -144,7 +128,7 @@ func parsFieldAssocName(ent *entity.St, field *entity.FieldSt) string {
 
 	if ent.ListSt != nil {
 		for _, f := range ent.ListSt.Fields {
-			if f.Name == field.Name {
+			if f.Name.Camel == field.Name.Camel {
 				return f.JsonName
 			}
 		}
@@ -153,18 +137,15 @@ func parsFieldAssocName(ent *entity.St, field *entity.FieldSt) string {
 	return ""
 }
 
-func fieldTupleGetter(field *entity.FieldSt, oName string) string {
+func fieldSubQueryForIn(field *entity.FieldSt, name string) string {
 	switch field.Type {
-	case "[]string":
-		return `strings.Replace(strings.TrimSpace(strings.Join(` + oName + `.` + field.Name + `, " ") + " null"), " ", ",", -1)`
-	case "*[]string":
-		return `strings.Replace(strings.TrimSpace(strings.Join(*` + oName + `.` + field.Name + `, " ") + " null"), " ", ",", -1)`
+	case "[]string", "*[]string":
+		return `(select * from unnest(${` + name + `} :: string[]))`
 	case "[]int", "[]int8", "[]int16", "[]int32", "[]int64",
-		"[]uint", "[]uint8", "[]uint16", "[]uint32", "[]uint64":
-		return `strings.Replace(strings.TrimSpace(strings.Trim(fmt.Sprint(` + oName + `.` + field.Name + `), "[]") + " null"), " ", ",", -1)`
-	case "*[]int", "*[]int8", "*[]int16", "*[]int32", "*[]int64",
+		"[]uint", "[]uint8", "[]uint16", "[]uint32", "[]uint64",
+		"*[]int", "*[]int8", "*[]int16", "*[]int32", "*[]int64",
 		"*[]uint", "*[]uint8", "*[]uint16", "*[]uint32", "*[]uint64":
-		return `strings.Replace(strings.TrimSpace(strings.Trim(fmt.Sprint(*` + oName + `.` + field.Name + `), "[]") + " null"), " ", ",", -1)`
+		return `(select * from unnest(${` + name + `} :: bigint[]))`
 	}
 	return ""
 }
