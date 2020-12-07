@@ -1,7 +1,6 @@
 package entity
 
 import (
-	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -84,7 +83,6 @@ func ParseField(f *ast.Field) *FieldSt {
 	if len(f.Names) == 1 {
 		result.Name.Origin = f.Names[0].Name
 		result.Name.Normalize()
-		fmt.Print(result.Name)
 	}
 
 	result.Type = ParseType(f.Type)

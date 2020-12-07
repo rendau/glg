@@ -47,12 +47,14 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 	err = t.Execute(outF, struct {
 		Pr       *project.St
 		EName    *entity.NameSt
+		TName    string
 		Ent      *entity.St
 		Ctx4Get  map[string]interface{}
 		Ctx4List map[string]interface{}
 	}{
 		Pr:       pr,
 		EName:    eName,
+		TName:    tableName(eName),
 		Ent:      ent,
 		Ctx4Get:  getCtx4Get(pr, eName, ent),
 		Ctx4List: getCtx4List(pr, eName, ent),
@@ -75,7 +77,7 @@ func getCtx4Get(pr *project.St, eName *entity.NameSt, ent *entity.St) map[string
 func getCtx4List(pr *project.St, eName *entity.NameSt, ent *entity.St) map[string]interface{} {
 	result := map[string]interface{}{}
 
-	for _, field := range ent.ListSt.Fields {
+	for _, field := range ent.ListParsSt.Fields {
 		if strings.Contains(strings.ToLower(field.Type), "pagination") {
 			result["hasPagination"] = true
 			break
@@ -85,6 +87,8 @@ func getCtx4List(pr *project.St, eName *entity.NameSt, ent *entity.St) map[strin
 	result["parsFields"] = ent.ListParsSt.Fields
 	result["fields"] = ent.ListSt.Fields
 	result["scanableFields"] = scanableFields(ent.ListSt.Fields)
+
+	fmt.Println(result)
 
 	return result
 }
@@ -148,4 +152,17 @@ func fieldSubQueryForIn(field *entity.FieldSt, name string) string {
 		return `(select * from unnest(${` + name + `} :: bigint[]))`
 	}
 	return ""
+}
+
+func tableName(eName *entity.NameSt) string {
+	switch eName.Snake {
+	case "role":
+		return `"role"`
+	case "group":
+		return `"group"`
+	case "user":
+		return `"user"`
+	}
+
+	return eName.Snake
 }
