@@ -9,7 +9,6 @@ import (
     {{- end }}
 )
 
-{{ if and .Ctx4Get.scanableFields (len .Ctx4Get.scanableFields) -}}
 func (d *St) {{ .EName.Camel }}Get(ctx context.Context, id int64) (*entities.{{ .EName.Camel }}St, error) {
     result := &entities.{{ .EName.Camel }}St{}
 
@@ -34,7 +33,6 @@ func (d *St) {{ .EName.Camel }}Get(ctx context.Context, id int64) (*entities.{{ 
 
     return result, nil
 }
-{{- end }}
 
 func (d *St) {{ .EName.Camel }}List(ctx context.Context, pars entities.{{ .EName.Camel }}ListParsSt) ([]*entities.{{ .EName.Camel }}ListSt{{ if .Ctx4List.hasPagination -}}, int64{{ end }}, error) {
     var err error
@@ -120,4 +118,106 @@ func (d *St) {{ .EName.Camel }}List(ctx context.Context, pars entities.{{ .EName
     }
 
     return recs{{ if .Ctx4List.hasPagination -}}, tCount{{ end }}, nil
+}
+
+func (d *St) {{ .EName.Camel }}IdExists(ctx context.Context, id int64) (bool, error) {
+	var cnt uint32
+
+	err := d.DbQueryRow(ctx, `
+		select count(*)
+		from {{ .TName }}
+		where id = $1
+	`, id).Scan(&cnt)
+	if err != nil {
+		return false, d.handleError(ctx, err)
+	}
+
+	return cnt > 0, nil
+}
+
+func (d *St) {{ .EName.Camel }}GetCUArgs(obj *entities.{{ .EName.Camel }}CUSt) (map[string]interface{}, error) {
+	result := make(map[string]interface{})
+
+    {{- range $field := .Ctx4CuArgs.fields }}
+        {{- if $field.IsTypePointer }}
+
+            if obj.{{ $field.Name.Origin }} != nil {
+                result["{{ $field.JsonName }}"] = *obj.{{ $field.Name.Origin }}
+            }
+        {{- end }}
+    {{- end }}
+
+	return result, nil
+}
+
+func (d *St) {{ .EName.Camel }}Create(ctx context.Context, obj *entities.{{ .EName.Camel }}CUSt) (int64, error) {
+	args, err := d.{{ .EName.Camel }}GetCUArgs(obj)
+	if err != nil {
+		return 0, err
+	}
+
+	var fields string
+	var values string
+
+	for k := range args {
+		if fields != `` {
+			fields += `,`
+			values += `,`
+		}
+		fields += k
+		values += `${` + k + `}`
+	}
+
+	var newId int64
+
+	err = d.DbQueryRowM(ctx, `
+		insert into {{ .TName }}(`+fields+`)
+		values (`+values+`)
+		returning id
+	`, args).Scan(&newId)
+	if err != nil {
+		return 0, d.handleError(ctx, err)
+	}
+
+	return newId, nil
+}
+
+func (d *St) {{ .EName.Camel }}Update(ctx context.Context, id int64, obj *entities.{{ .EName.Camel }}CUSt) error {
+	args, err := d.{{ .EName.Camel }}GetCUArgs(obj)
+	if err != nil {
+		return err
+	}
+
+	if len(args) > 0 {
+		var fields string
+
+		for k := range args {
+			if fields != `` {
+				fields += `,`
+			}
+			fields += k + `=${` + k + `}`
+		}
+
+		args["id"] = id
+
+		_, err = d.DbExecM(ctx, `
+			update {{ .TName }}
+			set `+fields+`
+			where id = ${id}
+		`, args)
+		if err != nil {
+			return d.handleError(ctx, err)
+		}
+	}
+
+	return nil
+}
+
+func (d *St) {{ .EName.Camel }}Delete(ctx context.Context, id int64) error {
+	_, err := d.DbExec(ctx, `delete from {{ .TName }} where id = $1`, id)
+	if err != nil {
+		return d.handleError(ctx, err)
+	}
+
+	return nil
 }

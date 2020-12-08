@@ -45,19 +45,21 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 	defer outF.Close()
 
 	err = t.Execute(outF, struct {
-		Pr       *project.St
-		EName    *entity.NameSt
-		TName    string
-		Ent      *entity.St
-		Ctx4Get  map[string]interface{}
-		Ctx4List map[string]interface{}
+		Pr         *project.St
+		EName      *entity.NameSt
+		TName      string
+		Ent        *entity.St
+		Ctx4Get    map[string]interface{}
+		Ctx4List   map[string]interface{}
+		Ctx4CuArgs map[string]interface{}
 	}{
-		Pr:       pr,
-		EName:    eName,
-		TName:    tableName(eName),
-		Ent:      ent,
-		Ctx4Get:  getCtx4Get(pr, eName, ent),
-		Ctx4List: getCtx4List(pr, eName, ent),
+		Pr:         pr,
+		EName:      eName,
+		TName:      tableName(eName),
+		Ent:        ent,
+		Ctx4Get:    getCtx4Get(pr, eName, ent),
+		Ctx4List:   getCtx4List(pr, eName, ent),
+		Ctx4CuArgs: getCtx4CuArgs(pr, eName, ent),
 	})
 	if err != nil {
 		log.Panicln(err)
@@ -88,7 +90,13 @@ func getCtx4List(pr *project.St, eName *entity.NameSt, ent *entity.St) map[strin
 	result["fields"] = ent.ListSt.Fields
 	result["scanableFields"] = scanableFields(ent.ListSt.Fields)
 
-	fmt.Println(result)
+	return result
+}
+
+func getCtx4CuArgs(pr *project.St, eName *entity.NameSt, ent *entity.St) map[string]interface{} {
+	result := map[string]interface{}{}
+
+	result["fields"] = ent.CuSt.Fields
 
 	return result
 }
@@ -104,12 +112,16 @@ func scanableFields(fields []*entity.FieldSt) []*entity.FieldSt {
 			result = append(result, f)
 		case "uint", "uint8", "uint16", "uint32", "uint64":
 			result = append(result, f)
+		case "float32", "float64":
+			result = append(result, f)
 
 		case "[]bool", "[]string":
 			result = append(result, f)
 		case "[]int", "[]int8", "[]int16", "[]int32", "[]int64":
 			result = append(result, f)
 		case "[]uint", "[]uint8", "[]uint16", "[]uint32", "[]uint64":
+			result = append(result, f)
+		case "[]float32", "[]float64":
 			result = append(result, f)
 		}
 	}
