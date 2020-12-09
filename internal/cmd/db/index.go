@@ -8,11 +8,10 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/rendau/glg/internal/util"
-
 	"github.com/rendau/glg/assets"
 	"github.com/rendau/glg/internal/entity"
 	"github.com/rendau/glg/internal/project"
+	"github.com/rendau/glg/internal/util"
 )
 
 func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
@@ -36,7 +35,7 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 		log.Panicln(err)
 	}
 
-	fPath := filepath.Join(pr.DbDirPath.Rel, eName.Snake+".go")
+	fPath := filepath.Join(pr.DbDirPath.Abs, eName.Snake+".go")
 
 	outF, err := os.Create(fPath)
 	if err != nil {

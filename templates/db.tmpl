@@ -4,9 +4,7 @@ import (
     "context"
     "database/sql"
     "github.com/jackc/pgtype"
-    {{- if .Pr.EntitiesDirPath }}
-        "{{ .Pr.Uri }}/{{ .Pr.EntitiesDirPath.Abs }}"
-    {{- end }}
+    "{{ .Pr.Uri }}/{{ .Pr.EntitiesDirPath.Rel }}"
 )
 
 func (d *St) {{ .EName.Camel }}Get(ctx context.Context, id int64) (*entities.{{ .EName.Camel }}St, error) {

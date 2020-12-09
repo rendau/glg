@@ -3,6 +3,7 @@ package module
 import (
 	"log"
 
+	"github.com/rendau/glg/internal/cmd/core"
 	"github.com/rendau/glg/internal/cmd/db"
 	"github.com/rendau/glg/internal/entity"
 	"github.com/rendau/glg/internal/project"
@@ -19,9 +20,10 @@ func Run(dir, name string) {
 		return
 	}
 
-	ent := entity.Parse(pr.EntitiesDirPath.Rel, eName)
+	ent := entity.Parse(pr.EntitiesDirPath.Abs, eName)
 
 	// fmt.Println(ent)
 
+	core.Make(pr, eName, ent)
 	db.Make(pr, eName, ent)
 }
