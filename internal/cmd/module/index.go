@@ -5,6 +5,7 @@ import (
 
 	"github.com/rendau/glg/internal/cmd/core"
 	"github.com/rendau/glg/internal/cmd/db"
+	"github.com/rendau/glg/internal/cmd/usecases"
 	"github.com/rendau/glg/internal/entity"
 	"github.com/rendau/glg/internal/project"
 )
@@ -24,6 +25,7 @@ func Run(dir, name string) {
 
 	// fmt.Println(ent)
 
-	core.Make(pr, eName, ent)
 	db.Make(pr, eName, ent)
+	core.Make(pr, eName, ent)
+	usecases.Make(pr, eName, ent)
 }

@@ -5,6 +5,7 @@ type St struct {
 	EntitiesDirPath *PathSt
 	DbDirPath       *PathSt
 	CoreDirPath     *PathSt
+	UsecasesDirPath *PathSt
 }
 
 type PathSt struct {

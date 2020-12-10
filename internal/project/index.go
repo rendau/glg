@@ -21,6 +21,7 @@ func Discover(dir string) *St {
 	result.EntitiesDirPath = getEntitiesDirPath(dir)
 	result.DbDirPath = getDbDirPath(dir)
 	result.CoreDirPath = getCoreDirPath(dir)
+	result.UsecasesDirPath = getUsecasesDirPath(dir)
 
 	return result
 }
@@ -77,6 +78,17 @@ func getCoreDirPath(dir string) *PathSt {
 		return &PathSt{
 			Abs: path,
 			Rel: "internal/domain/core",
+		}
+	}
+
+	return nil
+}
+
+func getUsecasesDirPath(dir string) *PathSt {
+	if path := filepath.Join(dir, "internal", "domain", "usecases"); util.IsDirExists(path) {
+		return &PathSt{
+			Abs: path,
+			Rel: "internal/domain/usecases",
 		}
 	}
 
