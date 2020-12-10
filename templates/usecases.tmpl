@@ -25,10 +25,10 @@ func (u *St) {{ .EName.Camel }}List(ctx context.Context) ([]*entities.{{ .EName.
 	}
 
 	if err = u.db.CommitContextTransaction(ctx); err != nil {
-		return nil{{ if .Ctx4List.hasPagination -}}, tCount{{ end }}, err
+		return nil{{ if .Ctx4List.hasPagination -}}, 0{{ end }}, err
 	}
 
-	return items, nil
+	return items{{ if .Ctx4List.hasPagination -}}, tCount{{ end }}, nil
 }
 
 func (u *St) {{ .EName.Camel }}Get(ctx context.Context,

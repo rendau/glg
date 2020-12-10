@@ -22,6 +22,7 @@ func Discover(dir string) *St {
 	result.DbDirPath = getDbDirPath(dir)
 	result.CoreDirPath = getCoreDirPath(dir)
 	result.UsecasesDirPath = getUsecasesDirPath(dir)
+	result.InterfacesDirPath = getInterfacesDirPath(dir)
 
 	return result
 }
@@ -89,6 +90,17 @@ func getUsecasesDirPath(dir string) *PathSt {
 		return &PathSt{
 			Abs: path,
 			Rel: "internal/domain/usecases",
+		}
+	}
+
+	return nil
+}
+
+func getInterfacesDirPath(dir string) *PathSt {
+	if path := filepath.Join(dir, "internal", "interfaces"); util.IsDirExists(path) {
+		return &PathSt{
+			Abs: path,
+			Rel: "internal/interfaces",
 		}
 	}
 

@@ -2,6 +2,7 @@
 // sources:
 // templates/core.tmpl
 // templates/db.tmpl
+// templates/interfaces.tmpl
 // templates/usecases.tmpl
 package assets
 
@@ -49,6 +50,24 @@ func templatesCoreTmpl() (*asset, error) {
 func templatesDbTmpl() (*asset, error) {
 	path := "/Users/dauren/Documents/rendau/glg/templates/db.tmpl"
 	name := "templates/db.tmpl"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// templatesInterfacesTmpl reads file data from disk. It returns an error on failure.
+func templatesInterfacesTmpl() (*asset, error) {
+	path := "/Users/dauren/Documents/rendau/glg/templates/interfaces.tmpl"
+	name := "templates/interfaces.tmpl"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -133,9 +152,10 @@ func AssetNames() []string {
 
 // _bindata is a table, holding each asset generator, mapped to its name.
 var _bindata = map[string]func() (*asset, error){
-	"templates/core.tmpl":     templatesCoreTmpl,
-	"templates/db.tmpl":       templatesDbTmpl,
-	"templates/usecases.tmpl": templatesUsecasesTmpl,
+	"templates/core.tmpl":       templatesCoreTmpl,
+	"templates/db.tmpl":         templatesDbTmpl,
+	"templates/interfaces.tmpl": templatesInterfacesTmpl,
+	"templates/usecases.tmpl":   templatesUsecasesTmpl,
 }
 
 // AssetDir returns the file names below a certain
@@ -180,9 +200,10 @@ type bintree struct {
 
 var _bintree = &bintree{nil, map[string]*bintree{
 	"templates": &bintree{nil, map[string]*bintree{
-		"core.tmpl":     &bintree{templatesCoreTmpl, map[string]*bintree{}},
-		"db.tmpl":       &bintree{templatesDbTmpl, map[string]*bintree{}},
-		"usecases.tmpl": &bintree{templatesUsecasesTmpl, map[string]*bintree{}},
+		"core.tmpl":       &bintree{templatesCoreTmpl, map[string]*bintree{}},
+		"db.tmpl":         &bintree{templatesDbTmpl, map[string]*bintree{}},
+		"interfaces.tmpl": &bintree{templatesInterfacesTmpl, map[string]*bintree{}},
+		"usecases.tmpl":   &bintree{templatesUsecasesTmpl, map[string]*bintree{}},
 	}},
 }}
 
