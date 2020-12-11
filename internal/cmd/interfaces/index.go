@@ -11,10 +11,10 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/rendau/glg/assets"
-
 	"github.com/rendau/glg/internal/entity"
 	"github.com/rendau/glg/internal/project"
 	"github.com/rendau/glg/internal/util"
@@ -34,6 +34,8 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 		fmt.Println("Db-interface file not found")
 		return
 	}
+
+	removeCurrentMethods(fPath, eName.Origin)
 
 	side1, side2 := getInjectPosSides(fPath)
 
@@ -76,6 +78,24 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 	util.FmtFile(fPath)
 }
 
+func removeCurrentMethods(fPath, name string) {
+	var re = regexp.MustCompile(`(?si)(?://\s*` + name + `\n\s*)?` + name + `(?:Get|List|IdExists|Create|Update|Delete)\([^\n]+\n`)
+
+	fDataRaw, err := ioutil.ReadFile(fPath)
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	newData := re.ReplaceAllString(string(fDataRaw), "")
+
+	err = ioutil.WriteFile(fPath, []byte(newData), os.ModePerm)
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	util.FmtFile(fPath)
+}
+
 func getInjectPosSides(fPath string) (string, string) {
 	fDataRaw, err := ioutil.ReadFile(fPath)
 	if err != nil {
@@ -99,6 +119,12 @@ func getInjectPosSides(fPath string) (string, string) {
 				if strings.Contains(strings.ToLower(tSpec.Name.Name), "db") {
 					switch decl := tSpec.Type.(type) {
 					case *ast.InterfaceType:
+						for _, meth := range decl.Methods.List {
+							if len(meth.Names) != 1 {
+								continue
+							}
+							fmt.Printf("%s:\t\t'%v'\n", meth.Names[0], fData[meth.Pos()-1:meth.End()])
+						}
 						return fData[:decl.Methods.Closing-1], fData[decl.Methods.Closing-1:]
 					}
 				}
