@@ -32,7 +32,7 @@ func (d *St) {{ .EName.Camel }}Get(ctx context.Context, id int64) (*entities.{{ 
     return result, nil
 }
 
-func (d *St) {{ .EName.Camel }}List(ctx context.Context, pars entities.{{ .EName.Camel }}ListParsSt) ([]*entities.{{ .EName.Camel }}ListSt{{ if .Ctx4List.hasPagination -}}, int64{{ end }}, error) {
+func (d *St) {{ .EName.Camel }}List(ctx context.Context, pars *entities.{{ .EName.Camel }}ListParsSt) ([]*entities.{{ .EName.Camel }}ListSt{{ if .Ctx4List.hasPagination -}}, int64{{ end }}, error) {
     var err error
 
     qFrom := ` from {{ .TName }} t`

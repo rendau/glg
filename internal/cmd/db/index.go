@@ -113,6 +113,8 @@ func scanableFields(fields []*entity.FieldSt) []*entity.FieldSt {
 			result = append(result, f)
 		case "float32", "float64":
 			result = append(result, f)
+		case "time.Time":
+			result = append(result, f)
 
 		case "[]bool", "[]string":
 			result = append(result, f)

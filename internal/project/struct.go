@@ -4,9 +4,10 @@ type St struct {
 	Uri               string
 	EntitiesDirPath   *PathSt
 	DbDirPath         *PathSt
+	InterfacesDirPath *PathSt
 	CoreDirPath       *PathSt
 	UsecasesDirPath   *PathSt
-	InterfacesDirPath *PathSt
+	RestDirPath       *PathSt
 }
 
 type PathSt struct {

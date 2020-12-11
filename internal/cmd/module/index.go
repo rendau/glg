@@ -3,6 +3,8 @@ package module
 import (
 	"log"
 
+	"github.com/rendau/glg/internal/cmd/rest"
+
 	"github.com/rendau/glg/internal/cmd/core"
 	"github.com/rendau/glg/internal/cmd/db"
 	"github.com/rendau/glg/internal/cmd/interfaces"
@@ -31,4 +33,5 @@ func Run(dir, name string) {
 	interfaces.Make(pr, eName, ent)
 	core.Make(pr, eName, ent)
 	usecases.Make(pr, eName, ent)
+	rest.Make(pr, eName, ent)
 }

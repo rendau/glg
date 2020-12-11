@@ -1,11 +1,13 @@
 package entity
 
 import (
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
 	"log"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strings"
 )
@@ -87,6 +89,10 @@ func ParseField(f *ast.Field) *FieldSt {
 
 	result.Type = ParseType(f.Type)
 
+	if result.Type == "" {
+		fmt.Printf("Strange type for field '%s': %v", result.Name.Origin, reflect.TypeOf(f.Type))
+	}
+
 	result.IsTypePointer = strings.HasPrefix(result.Type, "*")
 	result.IsTypeSlice = strings.HasPrefix(result.Type, "[]") || strings.HasPrefix(result.Type, "*[]")
 
@@ -102,6 +108,15 @@ func ParseType(expr ast.Expr) string {
 	switch decl := expr.(type) {
 	case *ast.Ident:
 		return decl.Name
+	case *ast.SelectorExpr:
+		var selName string
+		if decl.Sel != nil {
+			selName = decl.Sel.Name
+		}
+		if tp := ParseType(decl.X); tp != "" {
+			return tp + "." + selName
+		}
+		return selName
 	case *ast.StarExpr:
 		if tp := ParseType(decl.X); tp != "" {
 			return "*" + tp
