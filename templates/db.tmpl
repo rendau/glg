@@ -3,6 +3,7 @@ package pg
 import (
     "context"
     "database/sql"
+    "github.com/jackc/pgx/v4"
     "github.com/jackc/pgtype"
     "{{ .Pr.Uri }}/{{ .Pr.EntitiesDirPath.Rel }}"
 )
@@ -106,13 +107,13 @@ func (d *St) {{ .EName.Camel }}List(ctx context.Context, pars *entities.{{ .ENam
         {{- end }}
         )
         if err != nil {
-            return nil{{ if .Ctx4List.hasPagination -}}, 0{{ end }}, d.handleError(err)
+            return nil{{ if .Ctx4List.hasPagination -}}, 0{{ end }}, d.handleError(ctx, err)
         }
 
         recs = append(recs, rec)
     }
     if err = rows.Err(); err != nil {
-        return nil{{ if .Ctx4List.hasPagination -}}, 0{{ end }}, d.handleError(err)
+        return nil{{ if .Ctx4List.hasPagination -}}, 0{{ end }}, d.handleError(ctx, err)
     }
 
     return recs{{ if .Ctx4List.hasPagination -}}, tCount{{ end }}, nil
@@ -131,21 +132,6 @@ func (d *St) {{ .EName.Camel }}IdExists(ctx context.Context, id int64) (bool, er
 	}
 
 	return cnt > 0, nil
-}
-
-func (d *St) {{ .EName.Camel }}GetCUArgs(obj *entities.{{ .EName.Camel }}CUSt) (map[string]interface{}, error) {
-	result := make(map[string]interface{})
-
-    {{- range $field := .Ctx4CuArgs.fields }}
-        {{- if $field.IsTypePointer }}
-
-            if obj.{{ $field.Name.Origin }} != nil {
-                result["{{ $field.JsonName }}"] = *obj.{{ $field.Name.Origin }}
-            }
-        {{- end }}
-    {{- end }}
-
-	return result, nil
 }
 
 func (d *St) {{ .EName.Camel }}Create(ctx context.Context, obj *entities.{{ .EName.Camel }}CUSt) (int64, error) {
@@ -209,6 +195,21 @@ func (d *St) {{ .EName.Camel }}Update(ctx context.Context, id int64, obj *entiti
 	}
 
 	return nil
+}
+
+func (d *St) {{ .EName.Camel }}GetCUArgs(obj *entities.{{ .EName.Camel }}CUSt) (map[string]interface{}, error) {
+	result := make(map[string]interface{})
+
+    {{- range $field := .Ctx4CuArgs.fields }}
+        {{- if $field.IsTypePointer }}
+
+            if obj.{{ $field.Name.Origin }} != nil {
+                result["{{ $field.JsonName }}"] = *obj.{{ $field.Name.Origin }}
+            }
+        {{- end }}
+    {{- end }}
+
+	return result, nil
 }
 
 func (d *St) {{ .EName.Camel }}Delete(ctx context.Context, id int64) error {

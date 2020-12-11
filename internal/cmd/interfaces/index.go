@@ -119,12 +119,6 @@ func getInjectPosSides(fPath string) (string, string) {
 				if strings.Contains(strings.ToLower(tSpec.Name.Name), "db") {
 					switch decl := tSpec.Type.(type) {
 					case *ast.InterfaceType:
-						for _, meth := range decl.Methods.List {
-							if len(meth.Names) != 1 {
-								continue
-							}
-							fmt.Printf("%s:\t\t'%v'\n", meth.Names[0], fData[meth.Pos()-1:meth.End()])
-						}
 						return fData[:decl.Methods.Closing-1], fData[decl.Methods.Closing-1:]
 					}
 				}

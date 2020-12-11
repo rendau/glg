@@ -11,7 +11,7 @@ import (
 func (a *St) h{{ .EName.Camel }}List(w http.ResponseWriter, r *http.Request) {
 	qPars := r.URL.Query()
 
-	pars := &entities.{{ .EName.Camel }}ListPars{
+	pars := &entities.{{ .EName.Camel }}ListParsSt{
 	{{- range $field := .Ctx4List.parsFields }}
 		{{- if getListParParser $field }}
 			{{ $field.Name.Origin }}: a.{{ getListParParser $field }}(qPars, "{{ $field.Name.Snake }}"),
@@ -28,7 +28,7 @@ func (a *St) h{{ .EName.Camel }}List(w http.ResponseWriter, r *http.Request) {
 		paginated := pars.Limit > 0
 
 		result, tCount, err := a.ucs.{{ .EName.Camel }}List(a.uGetRequestContext(r), pars)
-		if a.uHandleErr(err, r, w) {
+		if a.uHandleError(err, r, w) {
 			return
 		}
 
@@ -45,7 +45,7 @@ func (a *St) h{{ .EName.Camel }}List(w http.ResponseWriter, r *http.Request) {
 	{{- else }}
 
 		result, err := a.ucs.{{ .EName.Camel }}List(a.uGetRequestContext(r), pars)
-		if a.uHandleErr(err, r, w) {
+		if a.uHandleError(err, r, w) {
 			return
 		}
 
