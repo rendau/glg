@@ -35,6 +35,7 @@ type FieldSt struct {
 
 func (o *NameSt) Normalize() {
 	if o.Origin != "" {
+		o.Origin = util.Case2Camel(o.Origin)
 		o.Camel = util.Case2Camel(o.Origin)
 		o.Snake = util.Case2Snake(o.Origin)
 	} else {

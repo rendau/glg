@@ -6,13 +6,13 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"html/template"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+	"text/template"
 
 	"github.com/rendau/glg/assets"
 	"github.com/rendau/glg/internal/entity"
@@ -35,7 +35,7 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 		return
 	}
 
-	removeCurrentMethods(fPath, eName.Origin)
+	removeCurrentMethods(fPath, eName)
 
 	side1, side2 := getInjectPosSides(fPath)
 
@@ -78,8 +78,8 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 	util.FmtFile(fPath)
 }
 
-func removeCurrentMethods(fPath, name string) {
-	var re = regexp.MustCompile(`(?si)(?://\s*` + name + `\n\s*)?` + name + `(?:Get|List|IdExists|Create|Update|Delete)\([^\n]+\n`)
+func removeCurrentMethods(fPath string, eName *entity.NameSt) {
+	var re = regexp.MustCompile(`(?si)(?://\s*` + eName.Snake + `\n\s*)?` + eName.Camel + `(?:Get|List|IdExists|Create|Update|Delete)\([^\n]+\n`)
 
 	fDataRaw, err := ioutil.ReadFile(fPath)
 	if err != nil {
