@@ -62,15 +62,26 @@ func (d *St) {{ .EName.Camel }}List(ctx context.Context, pars *entities.{{ .ENam
         {{- end }}
     {{- end }}
 
-    {{- if .Ctx4List.hasPagination }}
-
+    {{ if .Ctx4List.hasPagination -}}
         var tCount int64
 
-        if pars.Limit > 0 {
+        if pars.Limit > 0 {{ if .Ctx4List.onlyCountFieldName -}} || pars.{{ .Ctx4List.onlyCountFieldName }}{{- end }} {
             err = d.DbQueryRowM(ctx, `select count(*)`+qFrom+qWhere, args).Scan(&tCount)
             if err != nil {
                 return nil, 0, d.handleError(ctx, err)
             }
+
+            {{ if .Ctx4List.onlyCountFieldName -}}
+                if pars.{{ .Ctx4List.onlyCountFieldName }} {
+                    return nil, tCount, nil
+                }
+            {{- end }}
+
+            {{ if ne .Ctx4List.onlyCountField nil -}}
+                if pars.{{ .Ctx4List.onlyCountField.Name.Origin }} {
+                    return nil, tCount, nil
+                }
+            {{- end }}
 
             qOffset = ` offset ` + strconv.FormatInt(pars.Offset, 10)
             qLimit = ` limit ` + strconv.FormatInt(pars.Limit, 10)

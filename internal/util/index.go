@@ -2,8 +2,14 @@ package util
 
 import (
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -59,4 +65,66 @@ func FmtFile(fPath string) {
 			fmt.Println("Fail to 'gofmt'", fPath, err)
 		}
 	}
+}
+
+func DivideStructEndPosSides(fPath, structName string) (string, string, bool) {
+	fDataRaw, err := ioutil.ReadFile(fPath)
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	fData := string(fDataRaw)
+
+	fSet := token.NewFileSet()
+
+	f, err := parser.ParseFile(fSet, filepath.Join(fPath), nil, 0)
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	for _, decl := range f.Decls {
+		switch gDecl := decl.(type) {
+		case *ast.GenDecl:
+			if gDecl.Tok == token.TYPE && len(gDecl.Specs) == 1 {
+				tSpec := gDecl.Specs[0].(*ast.TypeSpec)
+				if strings.ToLower(tSpec.Name.Name) == strings.ToLower(structName) {
+					switch decl := tSpec.Type.(type) {
+					case *ast.StructType:
+						return fData[:decl.Fields.Closing-1], fData[decl.Fields.Closing-1:], true
+					}
+				}
+			}
+		}
+	}
+
+	return "", "", false
+}
+
+func DivideFuncReturnPosSides(fPath, funcName string) (string, string, bool) {
+	fDataRaw, err := ioutil.ReadFile(fPath)
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	fData := string(fDataRaw)
+
+	fSet := token.NewFileSet()
+
+	f, err := parser.ParseFile(fSet, filepath.Join(fPath), nil, 0)
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	for _, decl := range f.Decls {
+		if fn, ok := decl.(*ast.FuncDecl); ok {
+			if strings.ToLower(fn.Name.Name) == strings.ToLower(funcName) {
+				returnPos := strings.LastIndex(fData[:fn.Body.End()-1], "return")
+				if returnPos > 0 {
+					return fData[:returnPos-1], fData[returnPos-1:], true
+				}
+			}
+		}
+	}
+
+	return "", "", false
 }

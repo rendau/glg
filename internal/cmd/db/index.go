@@ -85,6 +85,13 @@ func getCtx4List(pr *project.St, eName *entity.NameSt, ent *entity.St) map[strin
 		}
 	}
 
+	for _, field := range ent.ListParsSt.Fields {
+		if field.Name.Snake == "only_count" && field.Type == "bool" {
+			result["onlyCountFieldName"] = field.Name.Origin
+			break
+		}
+	}
+
 	result["parsFields"] = ent.ListParsSt.Fields
 	result["fields"] = ent.ListSt.Fields
 	result["scanableFields"] = scanableFields(ent.ListSt.Fields)

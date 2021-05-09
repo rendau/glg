@@ -2,9 +2,11 @@ package core
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -53,6 +55,46 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 	})
 	if err != nil {
 		log.Panicln(err)
+	}
+
+	util.FmtFile(fPath)
+
+	registerModule(pr.CoreDirPath.Abs, eName)
+}
+
+func registerModule(coreDirPath string, eName *entity.NameSt) {
+	const fName = "index.go"
+
+	fPath := filepath.Join(coreDirPath, fName)
+
+	// struct
+
+	side1, side2, ok := util.DivideStructEndPosSides(fPath, "St")
+	if !ok {
+		fmt.Println("Fail to register module in core. Not found 'St' struct type in `" + fName + "` file")
+	}
+
+	if regexp.MustCompile(eName.Camel+` +\*`+eName.Camel).FindString(side1) == "" {
+		err := ioutil.WriteFile(fPath, []byte(side1+eName.Camel+" *"+eName.Camel+side2), os.ModePerm)
+		if err != nil {
+			log.Panicln(err)
+		}
+
+		util.FmtFile(fPath)
+	}
+
+	// fun
+
+	side1, side2, ok = util.DivideFuncReturnPosSides(fPath, "New")
+	if !ok {
+		fmt.Println("Fail to register module in core. Not found 'New' function in `" + fName + "` file")
+	}
+
+	if regexp.MustCompile(eName.Camel+` += +New`+eName.Camel).FindString(side1) == "" {
+		err := ioutil.WriteFile(fPath, []byte(side1+eName.Camel+" = New"+eName.Camel+"(c)\n\n"+side2), os.ModePerm)
+		if err != nil {
+			log.Panicln(err)
+		}
 	}
 
 	util.FmtFile(fPath)
