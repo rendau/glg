@@ -91,7 +91,7 @@ func registerModule(coreDirPath string, eName *entity.NameSt) {
 	}
 
 	if regexp.MustCompile(eName.Camel+` += +New`+eName.Camel).FindString(side1) == "" {
-		err := ioutil.WriteFile(fPath, []byte(side1+eName.Camel+" = New"+eName.Camel+"(c)\n\n"+side2), os.ModePerm)
+		err := ioutil.WriteFile(fPath, []byte("c."+side1+eName.Camel+" = New"+eName.Camel+"(c)\n\n"+side2), os.ModePerm)
 		if err != nil {
 			log.Panicln(err)
 		}
