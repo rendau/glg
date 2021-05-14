@@ -11,7 +11,7 @@ func (u *St) {{ .EName.Camel }}List(ctx context.Context,
 
 	ses := u.ContextGetSession(ctx)
 
-	if err = u.SesRequireAuth(ses); err != nil {
+	if err = u.SessionRequireAuth(ses); err != nil {
 		return nil{{ if .Ctx4List.hasPagination -}}, 0{{ end }}, err
 	}
 
@@ -38,7 +38,7 @@ func (u *St) {{ .EName.Camel }}Get(ctx context.Context,
 
 	ses := u.ContextGetSession(ctx)
 
-	if err = u.SesRequireAuth(ses); err != nil {
+	if err = u.SessionRequireAuth(ses); err != nil {
 		return nil, err
 	}
 
@@ -65,7 +65,7 @@ func (u *St) {{ .EName.Camel }}Create(ctx context.Context,
 
 	ses := u.ContextGetSession(ctx)
 
-	if err = u.SesRequireAuth(ses); err != nil {
+	if err = u.SessionRequireAuth(ses); err != nil {
 		return 0, err
 	}
 
@@ -92,7 +92,7 @@ func (u *St) {{ .EName.Camel }}Update(ctx context.Context,
 
 	ses := u.ContextGetSession(ctx)
 
-	if err = u.SesRequireAuth(ses); err != nil {
+	if err = u.SessionRequireAuth(ses); err != nil {
 		return err
 	}
 
@@ -119,7 +119,7 @@ func (u *St) {{ .EName.Camel }}Delete(ctx context.Context,
 
 	ses := u.ContextGetSession(ctx)
 
-	if err = u.SesRequireAuth(ses); err != nil {
+	if err = u.SessionRequireAuth(ses); err != nil {
 		return err
 	}
 

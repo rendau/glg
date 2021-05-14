@@ -33,14 +33,14 @@ func (a *St) h{{ .EName.Camel }}List(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if paginated {
-			a.uRespondJSON(w, &PaginatedListRepSt{
+			a.uRespondJSON(w, 0, &PaginatedListRepSt{
 				Page:       page,
 				PageSize:   limit,
 				TotalCount: tCount,
 				Results:    result,
 			})
 		} else {
-			a.uRespondJSON(w, result)
+			a.uRespondJSON(w, 0, result)
 		}
 	{{- else }}
 
@@ -49,7 +49,7 @@ func (a *St) h{{ .EName.Camel }}List(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		a.uRespondJSON(w, result)
+		a.uRespondJSON(w, 0, result)
 	{{- end }}
 }
 
@@ -64,7 +64,7 @@ func (a *St) h{{ .EName.Camel }}Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	a.uRespondJSON(w, map[string]int64{"id": newId})
+	a.uRespondJSON(w, 0, map[string]int64{"id": newId})
 }
 
 func (a *St) h{{ .EName.Camel }}Get(w http.ResponseWriter, r *http.Request) {
@@ -76,7 +76,7 @@ func (a *St) h{{ .EName.Camel }}Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	a.uRespondJSON(w, result)
+	a.uRespondJSON(w, 0, result)
 }
 
 func (a *St) h{{ .EName.Camel }}Update(w http.ResponseWriter, r *http.Request) {
