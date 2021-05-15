@@ -9,7 +9,7 @@ import (
 )
 
 func (a *St) h{{ .EName.Camel }}List(w http.ResponseWriter, r *http.Request) {
-	qPars := r.URL.Query()
+	{{ if not (len .Ctx4List.parsFields) }}// {{ end }}qPars := r.URL.Query()
 
 	pars := &entities.{{ .EName.Camel }}ListParsSt{
 	{{- range $field := .Ctx4List.parsFields }}
