@@ -39,14 +39,18 @@ func MkdirAll(path string) error {
 	return os.MkdirAll(path, os.ModePerm)
 }
 
-func Case2Camel(v string) string {
+func Case2Camel(v string, local bool) string {
 	result := ""
 
-	for _, w := range strings.Split(v, "_") {
+	for _, w := range strings.Split(Case2Snake(v), "_") {
 		if w == "" {
 			continue
 		}
-		result += strings.Title(w)
+		if result == "" && local {
+			result += strings.ToLower(w)
+		} else {
+			result += strings.Title(w)
+		}
 	}
 
 	return result

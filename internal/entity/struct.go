@@ -9,14 +9,17 @@ import (
 type St struct {
 	Name       *NameSt
 	MainSt     *StructSt
+	GetParsSt  *StructSt
 	ListSt     *StructSt
 	ListParsSt *StructSt
 	CuSt       *StructSt
+	IdField    *FieldSt
 }
 
 type NameSt struct {
 	Origin string
 	Camel  string
+	LCamel string
 	Snake  string
 }
 
@@ -35,9 +38,10 @@ type FieldSt struct {
 
 func (o *NameSt) Normalize() {
 	if o.Origin != "" {
-		o.Origin = util.Case2Camel(o.Origin)
-		o.Camel = util.Case2Camel(o.Origin)
 		o.Snake = util.Case2Snake(o.Origin)
+		o.Origin = util.Case2Camel(o.Snake, false)
+		o.Camel = util.Case2Camel(o.Snake, false)
+		o.LCamel = util.Case2Camel(o.Snake, true)
 	} else {
 		o.Camel = ""
 		o.Snake = ""
@@ -62,6 +66,12 @@ func (o *St) String() string {
 	if o.MainSt != nil {
 		result += "  " + eName + "St:\n"
 		for _, f := range o.MainSt.Fields {
+			result += fmt.Sprintln("    ", *f)
+		}
+	}
+	if o.GetParsSt != nil {
+		result += "  " + eName + "GetParsSt:\n"
+		for _, f := range o.GetParsSt.Fields {
 			result += fmt.Sprintln("    ", *f)
 		}
 	}

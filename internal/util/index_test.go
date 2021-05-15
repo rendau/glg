@@ -1,14 +1,18 @@
 package util
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestCaseSnake2Camel(t *testing.T) {
-	require.Equal(t, "Asd", Case2Camel("asd"))
-	require.Equal(t, "AsdDsa", Case2Camel("asd_dsa"))
-	require.Equal(t, "AsdDsa", Case2Camel("AsdDsa"))
+	require.Equal(t, "Asd", Case2Camel("asd", false))
+	require.Equal(t, "AsdDsa", Case2Camel("asd_dsa", false))
+	require.Equal(t, "AsdDsa", Case2Camel("AsdDsa", false))
+	require.Equal(t, "asdDsa", Case2Camel("AsdDsa", true))
+	require.Equal(t, "asdDsa", Case2Camel("asd_dsa", true))
+	require.Equal(t, "asd", Case2Camel("asd", true))
 }
 
 func TestCaseCamel2Snake(t *testing.T) {

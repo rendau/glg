@@ -8,17 +8,43 @@ import (
     "{{ .Pr.Uri }}/{{ .Pr.EntitiesDirPath.Rel }}"
 )
 
-func (d *St) {{ .EName.Camel }}Get(ctx context.Context, id int64) (*entities.{{ .EName.Camel }}St, error) {
+func (d *St) {{ .EName.Camel }}Get(ctx context.Context, {{ if .Ent.GetParsSt }}pars *entities.{{ .EName.Camel }}GetParsSt{{ else if .Ent.IdField }}{{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}{{ else }}id int64{{ end }}) (*entities.{{ .EName.Camel }}St, error) {
+    args := make(map[string]interface{})
+
+    qFrom := `{{ .TName }} t`
+    qWhere := `1=1`
+
+    // filter
+    {{- if .Ent.GetParsSt }}
+        {{- range $field := .Ent.GetParsSt.Fields }}
+            {{- if $field.IsTypePointer }}
+                {{- if parsFieldAssocName $.Ent $field }}
+                    if pars.{{ $field.Name.Origin }} != nil {
+                        qWhere += ` and t.{{ parsFieldAssocName $.Ent $field }} = {{ "${" }}{{ $field.Name.Snake }}{{ "}" }}`
+                        args["{{ $field.Name.Snake }}"] = *pars.{{ $field.Name.Origin }}
+                    }
+                {{- end }}
+            {{- end }}
+        {{- end }}
+    {{ else if .Ent.IdField }}
+        qWhere = `t.{{ .Ent.IdField.JsonName }} = {{ "${" }}{{ .Ent.IdField.Name.Snake }}{{ "}" }}`
+        args["{{ .Ent.IdField.Name.Snake }}"] = {{ .Ent.IdField.Name.LCamel }}
+    {{ else }}
+        qWhere = `t.id = ${id}`
+        args["id"] = id
+    {{- end }}
+
     result := &entities.{{ .EName.Camel }}St{}
 
-    err := d.DbQueryRow(ctx, `
+    err := d.DbQueryRowM(ctx, `
         select {{ range $i, $field := .Ctx4Get.scanableFields -}}
         {{ if gt $i 0 }}
              , {{ end }}t.{{ $field.JsonName }}
         {{- end }}
-        from {{ .TName }} t
-        where t.id = $1
-    `, id).Scan(
+        from `+qFrom+`
+        where `+qWhere+`
+        limit 1
+    `, args).Scan(
     {{- range $field := .Ctx4Get.scanableFields }}
         &result.{{ $field.Name.Origin }},
     {{- end }}
@@ -55,7 +81,7 @@ func (d *St) {{ .EName.Camel }}List(ctx context.Context{{ if .Ent.ListParsSt -}}
                         }
                     {{- else }}
                         if pars.{{ $field.Name.Origin }} != nil {
-                            qWhere += ` and t.{{ parsFieldAssocName $.Ent $field }} = {{ "${" }}{{ parsFieldAssocName $.Ent $field }}{{ "}" }}`
+                            qWhere += ` and t.{{ parsFieldAssocName $.Ent $field }} = {{ "${" }}{{ $field.Name.Snake }}{{ "}" }}`
                             args["{{ $field.Name.Snake }}"] = *pars.{{ $field.Name.Origin }}
                         }
                     {{- end }}

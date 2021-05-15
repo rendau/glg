@@ -24,7 +24,11 @@ func Parse(dirPath string, eName *NameSt) *St {
 		log.Panicln(err)
 	}
 
-	return ParseF(f, eName)
+	result := ParseF(f, eName)
+
+	FindOutIdField(result)
+
+	return result
 }
 
 func ParseF(f *ast.File, eName *NameSt) *St {
@@ -57,6 +61,9 @@ func ParseSt(o *St, stName string, eName *NameSt, expr ast.Expr) {
 		case nameLower == eNameLower+"st":
 			o.MainSt = &StructSt{}
 			stInst = o.MainSt
+		case nameLower == eNameLower+"getparsst":
+			o.GetParsSt = &StructSt{}
+			stInst = o.GetParsSt
 		case nameLower == eNameLower+"listst":
 			o.ListSt = &StructSt{}
 			stInst = o.ListSt
@@ -136,8 +143,19 @@ func ParseTagJson(tag string) string {
 			if w == "" || w == "-" || w == "omitempty" {
 				continue
 			}
+
 			return w
 		}
 	}
+
 	return ""
+}
+
+func FindOutIdField(o *St) {
+	for _, field := range o.MainSt.Fields {
+		if field.Name.Snake == "id" {
+			o.IdField = field
+			break
+		}
+	}
 }
