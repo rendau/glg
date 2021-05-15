@@ -119,6 +119,8 @@ func ParseField(f *ast.Field) (*FieldSt, bool) {
 		}
 	}
 
+	result.DefineZeroValue()
+
 	return result, isIdField
 }
 

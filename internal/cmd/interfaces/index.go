@@ -79,16 +79,20 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 }
 
 func removeCurrentMethods(fPath string, eName *entity.NameSt) {
-	var re = regexp.MustCompile(`(?si)(?://\s*` + eName.Snake + `\n\s*)?` + eName.Camel + `(?:Get|List|IdExists|Create|Update|Delete)\([^\n]+\n`)
-
 	fDataRaw, err := ioutil.ReadFile(fPath)
 	if err != nil {
 		log.Panicln(err)
 	}
 
-	newData := re.ReplaceAllString(string(fDataRaw), "")
+	fData := string(fDataRaw)
 
-	err = ioutil.WriteFile(fPath, []byte(newData), os.ModePerm)
+	re := regexp.MustCompile(`(?si)(?://\s*` + eName.Snake + `\n\s*)?` + eName.Camel + `(?:Get|List|IdExists|Create|Update|Delete)\([^\n]+\n`)
+	fData = re.ReplaceAllString(fData, "")
+
+	re = regexp.MustCompile(`(?si)(?://\s*` + eName.Snake + `\n\s*)?` + eName.Camel + `\w+Exists\([^\n]+\n`)
+	fData = re.ReplaceAllString(fData, "")
+
+	err = ioutil.WriteFile(fPath, []byte(fData), os.ModePerm)
 	if err != nil {
 		log.Panicln(err)
 	}

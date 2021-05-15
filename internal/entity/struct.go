@@ -34,6 +34,7 @@ type FieldSt struct {
 	IsTypeSlice   bool
 	Tag           string
 	JsonName      string
+	ZeroValue     string
 }
 
 func (o *NameSt) Normalize() {
@@ -95,4 +96,20 @@ func (o *St) String() string {
 	}
 
 	return result
+}
+
+func (o *FieldSt) DefineZeroValue() {
+	switch o.Type {
+	case "bool":
+		o.ZeroValue = "false"
+	case "int", "int8", "int16", "int32", "int64",
+		"uint", "uint8", "uint16", "uint32", "uint64",
+		"float32", "float64",
+		"time.Time":
+		o.ZeroValue = "0"
+	case "string":
+		o.ZeroValue = `""`
+	default:
+		o.ZeroValue = "nil"
+	}
 }
