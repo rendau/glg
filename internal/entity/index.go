@@ -13,7 +13,8 @@ import (
 )
 
 var (
-	jsonTagRegexp = regexp.MustCompile(`(?iU)json:"(.*)"`)
+	jsonTagRegexp = regexp.MustCompile(`(?iU)json:"([^"]*)"`)
+	glgTagRegexp  = regexp.MustCompile(`(?iU)glg:"([^"]*)"`)
 )
 
 func Parse(dirPath string, eName *NameSt) *St {
@@ -78,15 +79,19 @@ func ParseSt(o *St, stName string, eName *NameSt, expr ast.Expr) {
 		}
 
 		for _, f := range decl.Fields.List {
-			field := ParseField(f)
+			field, isIdField := ParseField(f)
 			if field != nil {
 				stInst.Fields = append(stInst.Fields, field)
+
+				if stInst == o.MainSt && isIdField {
+					o.IdField = field
+				}
 			}
 		}
 	}
 }
 
-func ParseField(f *ast.Field) *FieldSt {
+func ParseField(f *ast.Field) (*FieldSt, bool) {
 	result := &FieldSt{}
 
 	if len(f.Names) == 1 {
@@ -103,12 +108,18 @@ func ParseField(f *ast.Field) *FieldSt {
 	result.IsTypePointer = strings.HasPrefix(result.Type, "*")
 	result.IsTypeSlice = strings.HasPrefix(result.Type, "[]") || strings.HasPrefix(result.Type, "*[]")
 
+	var isIdField bool
+
 	if f.Tag != nil {
 		result.Tag = f.Tag.Value
-		result.JsonName = ParseTagJson(result.Tag)
+		result.JsonName = TagParseJsonName(result.Tag)
+
+		if TagHasGlgId(result.Tag) {
+			isIdField = true
+		}
 	}
 
-	return result
+	return result, isIdField
 }
 
 func ParseType(expr ast.Expr) string {
@@ -137,7 +148,7 @@ func ParseType(expr ast.Expr) string {
 	return ""
 }
 
-func ParseTagJson(tag string) string {
+func TagParseJsonName(tag string) string {
 	if fRes := jsonTagRegexp.FindStringSubmatch(tag); len(fRes) > 1 {
 		for _, w := range strings.Split(fRes[1], ",") {
 			if w == "" || w == "-" || w == "omitempty" {
@@ -151,7 +162,23 @@ func ParseTagJson(tag string) string {
 	return ""
 }
 
+func TagHasGlgId(tag string) bool {
+	if fRes := glgTagRegexp.FindStringSubmatch(tag); len(fRes) > 1 {
+		for _, w := range strings.Split(fRes[1], ",") {
+			if w == "id" {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 func FindOutIdField(o *St) {
+	if o.IdField != nil {
+		return
+	}
+
 	for _, field := range o.MainSt.Fields {
 		if field.Name.Snake == "id" {
 			o.IdField = field
