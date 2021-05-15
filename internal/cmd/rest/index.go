@@ -63,14 +63,16 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 func getCtx4List(pr *project.St, eName *entity.NameSt, ent *entity.St) map[string]interface{} {
 	result := map[string]interface{}{}
 
-	for _, field := range ent.ListParsSt.Fields {
-		if strings.Contains(strings.ToLower(field.Type), "pagination") {
-			result["hasPagination"] = true
-			break
+	if ent.ListParsSt != nil {
+		for _, field := range ent.ListParsSt.Fields {
+			if strings.Contains(strings.ToLower(field.Type), "pagination") {
+				result["hasPagination"] = true
+				break
+			}
 		}
-	}
 
-	result["parsFields"] = ent.ListParsSt.Fields
+		result["parsFields"] = ent.ListParsSt.Fields
+	}
 
 	return result
 }

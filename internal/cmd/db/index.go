@@ -78,21 +78,24 @@ func getCtx4Get(pr *project.St, eName *entity.NameSt, ent *entity.St) map[string
 func getCtx4List(pr *project.St, eName *entity.NameSt, ent *entity.St) map[string]interface{} {
 	result := map[string]interface{}{}
 
-	for _, field := range ent.ListParsSt.Fields {
-		if strings.Contains(strings.ToLower(field.Type), "pagination") {
-			result["hasPagination"] = true
-			break
+	if ent.ListParsSt != nil {
+		for _, field := range ent.ListParsSt.Fields {
+			if strings.Contains(strings.ToLower(field.Type), "pagination") {
+				result["hasPagination"] = true
+				break
+			}
 		}
+
+		for _, field := range ent.ListParsSt.Fields {
+			if field.Name.Snake == "only_count" && field.Type == "bool" {
+				result["onlyCountFieldName"] = field.Name.Origin
+				break
+			}
+		}
+
+		result["parsFields"] = ent.ListParsSt.Fields
 	}
 
-	for _, field := range ent.ListParsSt.Fields {
-		if field.Name.Snake == "only_count" && field.Type == "bool" {
-			result["onlyCountFieldName"] = field.Name.Origin
-			break
-		}
-	}
-
-	result["parsFields"] = ent.ListParsSt.Fields
 	result["fields"] = ent.ListSt.Fields
 	result["scanableFields"] = scanableFields(ent.ListSt.Fields)
 

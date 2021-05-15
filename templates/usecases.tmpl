@@ -5,8 +5,8 @@ import (
 	"{{ .Pr.Uri }}/{{ .Pr.EntitiesDirPath.Rel }}"
 )
 
-func (u *St) {{ .EName.Camel }}List(ctx context.Context,
-	pars *entities.{{ .EName.Camel }}ListParsSt) ([]*entities.{{ .EName.Camel }}ListSt{{ if .Ctx4List.hasPagination -}}, int64{{ end }}, error) {
+func (u *St) {{ .EName.Camel }}List(ctx context.Context{{ if .Ent.ListParsSt }},
+	pars *entities.{{ .EName.Camel }}ListParsSt{{ end }}) ([]*entities.{{ .EName.Camel }}ListSt{{ if .Ctx4List.hasPagination -}}, int64{{ end }}, error) {
 	var err error
 
 	ses := u.ContextGetSession(ctx)
@@ -20,7 +20,7 @@ func (u *St) {{ .EName.Camel }}List(ctx context.Context,
 	}
 	defer func() { u.db.RollbackContextTransaction(ctx) }()
 
-	items{{ if .Ctx4List.hasPagination -}}, tCount{{ end }}, err := u.cr.{{ .EName.Camel }}.List(ctx, pars)
+	items{{ if .Ctx4List.hasPagination -}}, tCount{{ end }}, err := u.cr.{{ .EName.Camel }}.List(ctx{{ if .Ent.ListParsSt }}, pars{{ end }})
 	if err != nil {
 		return nil{{ if .Ctx4List.hasPagination -}}, 0{{ end }}, err
 	}
