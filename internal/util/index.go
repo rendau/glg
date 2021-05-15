@@ -15,7 +15,8 @@ import (
 )
 
 var (
-	camelCaseRegexp = regexp.MustCompile(`([a-z0-9])([A-Z])`)
+	camelCaseRegexp         = regexp.MustCompile(`([a-z0-9])([A-Z])`)
+	nonWhiteSpaceCharRegexp = regexp.MustCompile(`\S`)
 )
 
 func IsFileExists(path string) bool {
@@ -90,7 +91,9 @@ func DivideStructEndPosSides(fPath, structName string) (string, string, bool) {
 				if strings.ToLower(tSpec.Name.Name) == strings.ToLower(structName) {
 					switch decl := tSpec.Type.(type) {
 					case *ast.StructType:
-						return fData[:decl.Fields.Closing-1], fData[decl.Fields.Closing-1:], true
+						if ind := StringGetLastNonWhiteSpaceIndex(fData[:decl.Fields.Closing-1]); ind >= 0 {
+							return fData[:ind], fData[ind:], true
+						}
 					}
 				}
 			}
@@ -120,11 +123,23 @@ func DivideFuncReturnPosSides(fPath, funcName string) (string, string, bool) {
 			if strings.ToLower(fn.Name.Name) == strings.ToLower(funcName) {
 				returnPos := strings.LastIndex(fData[:fn.Body.End()-1], "return")
 				if returnPos > 0 {
-					return fData[:returnPos-1], fData[returnPos-1:], true
+					if ind := StringGetLastNonWhiteSpaceIndex(fData[:returnPos]); ind >= 0 {
+						return fData[:ind], fData[ind:], true
+					}
 				}
 			}
 		}
 	}
 
 	return "", "", false
+}
+
+func StringGetLastNonWhiteSpaceIndex(s string) int {
+	m := nonWhiteSpaceCharRegexp.FindAllStringIndex(s, -1)
+
+	if len(m) > 0 {
+		return m[len(m)-1][1]
+	}
+
+	return -1
 }

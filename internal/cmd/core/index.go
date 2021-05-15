@@ -70,12 +70,12 @@ func registerModule(coreDirPath string, eName *entity.NameSt) {
 	// struct
 
 	side1, side2, ok := util.DivideStructEndPosSides(fPath, "St")
-	if !ok {
+	if !ok || side1 == "" || side2 == "" {
 		fmt.Println("Fail to register module in core. Not found 'St' struct type in `" + fName + "` file")
 	}
 
 	if regexp.MustCompile(eName.Camel+` +\*`+eName.Camel).FindString(side1) == "" {
-		err := ioutil.WriteFile(fPath, []byte(side1+eName.Camel+" *"+eName.Camel+side2), os.ModePerm)
+		err := ioutil.WriteFile(fPath, []byte(side1+"\n"+eName.Camel+" *"+eName.Camel+side2), os.ModePerm)
 		if err != nil {
 			log.Panicln(err)
 		}
@@ -86,12 +86,12 @@ func registerModule(coreDirPath string, eName *entity.NameSt) {
 	// fun
 
 	side1, side2, ok = util.DivideFuncReturnPosSides(fPath, "New")
-	if !ok {
+	if !ok || side1 == "" || side2 == "" {
 		fmt.Println("Fail to register module in core. Not found 'New' function in `" + fName + "` file")
 	}
 
 	if regexp.MustCompile(eName.Camel+` += +New`+eName.Camel).FindString(side1) == "" {
-		err := ioutil.WriteFile(fPath, []byte(side1+"c."+eName.Camel+" = New"+eName.Camel+"(c)\n\n"+side2), os.ModePerm)
+		err := ioutil.WriteFile(fPath, []byte(side1+"\nc."+eName.Camel+" = New"+eName.Camel+"(c)"+side2), os.ModePerm)
 		if err != nil {
 			log.Panicln(err)
 		}
