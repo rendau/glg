@@ -107,6 +107,7 @@ func ParseField(f *ast.Field) (*FieldSt, bool) {
 
 	result.IsTypePointer = strings.HasPrefix(result.Type, "*")
 	result.IsTypeSlice = strings.HasPrefix(result.Type, "[]") || strings.HasPrefix(result.Type, "*[]")
+	result.IsTypeInt = strings.HasPrefix(result.Type, "int")
 
 	var isIdField bool
 

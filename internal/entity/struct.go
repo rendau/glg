@@ -32,6 +32,7 @@ type FieldSt struct {
 	Type          string
 	IsTypePointer bool
 	IsTypeSlice   bool
+	IsTypeInt     bool
 	Tag           string
 	JsonName      string
 	ZeroValue     string

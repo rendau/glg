@@ -68,51 +68,73 @@ func (a *St) h{{ .EName.Camel }}Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newId, err := a.ucs.{{ .EName.Camel }}Create(a.uGetRequestContext(r), reqObj)
+	{{ if .Ent.IdField }}result, {{ end }}err := a.ucs.{{ .EName.Camel }}Create(a.uGetRequestContext(r), reqObj)
 	if a.uHandleError(err, r, w) {
 		return
 	}
 
-	a.uRespondJSON(w, 0, map[string]int64{"id": newId})
+	{{ if .Ent.IdField -}}
+		a.uRespondJSON(w, 0, map[string]{{ .Ent.IdField.Type -}}{"{{ .Ent.IdField.JsonName -}}": result})
+	{{- else }}
+		w.WriteHeader(200)
+	{{- end }}
 }
 
+{{ if and .Ent.IdField (or (not .Ent.GetParsSt) .Ctx4Get.idFieldInGetParsSt) }}
 func (a *St) h{{ .EName.Camel }}Get(w http.ResponseWriter, r *http.Request) {
 	args := mux.Vars(r)
-	id, _ := strconv.ParseInt(args["id"], 10, 64)
+	{{- if .Ent.IdField.IsTypeInt }}
+		{{ .Ent.IdField.Name.LCamel }}, _ := strconv.ParseInt(args["{{ .Ent.IdField.JsonName }}"], 10, 64)
+	{{- else }}
+		{{ .Ent.IdField.Name.LCamel }} := args["{{ .Ent.IdField.JsonName }}"]
+	{{- end }}
 
-	result, err := a.ucs.{{ .EName.Camel }}Get(a.uGetRequestContext(r), id)
+	result, err := a.ucs.{{ .EName.Camel }}Get(a.uGetRequestContext(r), {{ .Ent.IdField.Name.LCamel }})
 	if a.uHandleError(err, r, w) {
 		return
 	}
 
 	a.uRespondJSON(w, 0, result)
 }
+{{ end }}
 
+{{ if .Ent.IdField }}
 func (a *St) h{{ .EName.Camel }}Update(w http.ResponseWriter, r *http.Request) {
 	args := mux.Vars(r)
-	id, _ := strconv.ParseInt(args["id"], 10, 64)
+	{{- if .Ent.IdField.IsTypeInt }}
+		{{ .Ent.IdField.Name.LCamel }}, _ := strconv.ParseInt(args["{{ .Ent.IdField.JsonName }}"], 10, 64)
+	{{- else }}
+		{{ .Ent.IdField.Name.LCamel }} := args["{{ .Ent.IdField.JsonName }}"]
+	{{- end }}
 
 	reqObj := &entities.{{ .EName.Camel }}CUSt{}
 	if !a.uParseRequestJSON(w, r, reqObj) {
 		return
 	}
 
-	err := a.ucs.{{ .EName.Camel }}Update(a.uGetRequestContext(r), id, reqObj)
+	err := a.ucs.{{ .EName.Camel }}Update(a.uGetRequestContext(r), {{ .Ent.IdField.Name.LCamel }}, reqObj)
 	if a.uHandleError(err, r, w) {
 		return
 	}
 
 	w.WriteHeader(200)
 }
+{{ end }}
 
+{{ if .Ent.IdField }}
 func (a *St) h{{ .EName.Camel }}Delete(w http.ResponseWriter, r *http.Request) {
 	args := mux.Vars(r)
-	id, _ := strconv.ParseInt(args["id"], 10, 64)
+	{{- if .Ent.IdField.IsTypeInt }}
+		{{ .Ent.IdField.Name.LCamel }}, _ := strconv.ParseInt(args["{{ .Ent.IdField.JsonName }}"], 10, 64)
+	{{- else }}
+		{{ .Ent.IdField.Name.LCamel }} := args["{{ .Ent.IdField.JsonName }}"]
+	{{- end }}
 
-	err := a.ucs.{{ .EName.Camel }}Delete(a.uGetRequestContext(r), id)
+	err := a.ucs.{{ .EName.Camel }}Delete(a.uGetRequestContext(r), {{ .Ent.IdField.Name.LCamel }})
 	if a.uHandleError(err, r, w) {
 		return
 	}
 
 	w.WriteHeader(200)
 }
+{{ end }}
