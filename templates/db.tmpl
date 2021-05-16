@@ -15,8 +15,7 @@ func (d *St) {{ .EName.Camel }}Get(ctx context.Context, {{ if .Ent.GetParsSt }}p
     qFrom := `{{ .TName }} t`
     qWhere := `1=1`
 
-    // filter
-    {{- if .Ent.GetParsSt }}
+    {{ if .Ent.GetParsSt }}
         {{- range $field := .Ent.GetParsSt.Fields }}
             {{- if $field.IsTypePointer }}
                 {{- if parsFieldAssocName $.Ent $field }}
@@ -25,7 +24,10 @@ func (d *St) {{ .EName.Camel }}Get(ctx context.Context, {{ if .Ent.GetParsSt }}p
                         args["{{ $field.Name.Snake }}"] = *pars.{{ $field.Name.Origin }}
                     }
                 {{- end }}
-            {{- end }}
+            {{ else if $field.IsId }}
+                qWhere += `t.{{ $.Ent.IdField.JsonName }} = {{ "${" }}{{ $.Ent.IdField.Name.Snake }}{{ "}" }}`
+                args["{{ $.Ent.IdField.Name.Snake }}"] = pars.{{ $field.Name.Origin }}
+            {{ end }}
         {{- end }}
     {{ else }}
         qWhere = `t.{{ .Ent.IdField.JsonName }} = {{ "${" }}{{ .Ent.IdField.Name.Snake }}{{ "}" }}`

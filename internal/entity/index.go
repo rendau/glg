@@ -85,6 +85,7 @@ func ParseSt(o *St, stName string, eName *NameSt, expr ast.Expr) {
 
 				if stInst == o.MainSt && isIdField {
 					o.IdField = field
+					stInst.IdField = field
 				}
 			}
 		}
@@ -178,14 +179,30 @@ func TagHasGlgId(tag string) bool {
 }
 
 func FindOutIdField(o *St) {
-	if o.IdField != nil {
-		return
+	if o.IdField == nil {
+		for _, field := range o.MainSt.Fields {
+			if field.Name.Snake == "id" {
+				field.IsId = true
+				o.MainSt.IdField = field
+				o.IdField = field
+			}
+		}
 	}
 
-	for _, field := range o.MainSt.Fields {
-		if field.Name.Snake == "id" {
-			o.IdField = field
-			break
+	// set IsId flag on other struct fields
+	if o.IdField != nil {
+		for _, st := range []*StructSt{o.GetParsSt, o.ListSt, o.ListParsSt} {
+			if st == nil {
+				continue
+			}
+
+			for _, field := range st.Fields {
+				if field.Name.Origin == o.IdField.Name.Origin &&
+					(field.Type == o.IdField.Type || field.Type == ("*"+o.IdField.Type)) {
+					field.IsId = true
+					st.IdField = field
+				}
+			}
 		}
 	}
 }

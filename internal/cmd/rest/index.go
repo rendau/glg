@@ -46,13 +46,11 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 		Pr       *project.St
 		EName    *entity.NameSt
 		Ent      *entity.St
-		Ctx4Get  map[string]interface{}
 		Ctx4List map[string]interface{}
 	}{
 		Pr:       pr,
 		EName:    eName,
 		Ent:      ent,
-		Ctx4Get:  getCtx4Get(pr, eName, ent),
 		Ctx4List: getCtx4List(pr, eName, ent),
 	})
 	if err != nil {
@@ -60,31 +58,6 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 	}
 
 	util.FmtFile(fPath)
-}
-
-func getCtx4Get(pr *project.St, eName *entity.NameSt, ent *entity.St) map[string]interface{} {
-	result := map[string]interface{}{}
-
-	if ent.GetParsSt != nil {
-		if ent.IdField != nil {
-			fields := make([]*entity.FieldSt, 0, len(ent.GetParsSt.Fields))
-
-			for _, field := range ent.GetParsSt.Fields {
-				if field.Name.Origin == ent.IdField.Name.Origin &&
-					(field.Type == ent.IdField.Type || field.Type == ("*"+ent.IdField.Type)) {
-					result["idFieldInGetPars"] = field
-				} else {
-					fields = append(fields, field)
-				}
-			}
-
-			result["parsFields"] = fields
-		} else {
-			result["parsFields"] = ent.GetParsSt.Fields
-		}
-	}
-
-	return result
 }
 
 func getCtx4List(pr *project.St, eName *entity.NameSt, ent *entity.St) map[string]interface{} {

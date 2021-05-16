@@ -83,7 +83,7 @@ func (a *St) h{{ .EName.Camel }}Create(w http.ResponseWriter, r *http.Request) {
 {{ if or .Ent.GetParsSt .Ent.IdField }}
 func (a *St) h{{ .EName.Camel }}Get(w http.ResponseWriter, r *http.Request) {
 	{{- if .Ent.GetParsSt }}
-		{{- if .Ctx4Get.idFieldInGetPars }}
+		{{- if .Ent.GetParsSt.IdField }}
 			args := mux.Vars(r)
 			{{- if .Ent.IdField.IsTypeInt }}
 				{{ .Ent.IdField.Name.LCamel }}, _ := strconv.ParseInt(args["{{ .Ent.IdField.JsonName }}"], 10, 64)
@@ -95,16 +95,17 @@ func (a *St) h{{ .EName.Camel }}Get(w http.ResponseWriter, r *http.Request) {
 		qPars := r.URL.Query()
 
 		pars := &entities.{{ .EName.Camel }}GetParsSt{
-		{{- range $field := .Ctx4Get.parsFields }}
-			{{- if getQueryParParser $field }}
-				{{ $field.Name.Origin }}: a.{{ getQueryParParser $field }}(qPars, "{{ $field.Name.Snake }}"),
+		{{- if .Ent.GetParsSt.IdField }}
+			{{ .Ent.GetParsSt.IdField.Name.Origin }}: {{ if .Ent.GetParsSt.IdField.IsTypePointer }}&{{ end }}{{ .Ent.IdField.Name.LCamel }},
+		{{- end }}
+		{{- range $field := .Ent.GetParsSt.Fields }}
+			{{- if not $field.IsId }}
+				{{- if getQueryParParser $field }}
+					{{ $field.Name.Origin }}: a.{{ getQueryParParser $field }}(qPars, "{{ $field.Name.Snake }}"),
+				{{- end }}
 			{{- end }}
 		{{- end }}
 		}
-		{{- if .Ctx4Get.idFieldInGetPars }}
-
-			pars.{{ .Ctx4Get.idFieldInGetPars.Name.Origin }} = {{ if .Ctx4Get.idFieldInGetPars.IsTypePointer }}&{{ end }}{{ .Ent.IdField.Name.LCamel }}
-		{{- end }}
 
 		result, err := a.ucs.{{ .EName.Camel }}Get(a.uGetRequestContext(r), pars)
 		if a.uHandleError(err, r, w) {

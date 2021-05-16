@@ -24,7 +24,8 @@ type NameSt struct {
 }
 
 type StructSt struct {
-	Fields []*FieldSt
+	Fields  []*FieldSt
+	IdField *FieldSt
 }
 
 type FieldSt struct {
@@ -36,6 +37,7 @@ type FieldSt struct {
 	Tag           string
 	JsonName      string
 	ZeroValue     string
+	IsId          bool
 }
 
 func (o *NameSt) Normalize() {
