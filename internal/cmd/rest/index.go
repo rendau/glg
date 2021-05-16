@@ -28,7 +28,7 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 	}
 
 	t, err := template.New("rest.tmp").Funcs(template.FuncMap{
-		"getListParParser": getListParParser,
+		"getQueryParParser": getQueryParParser,
 	}).Parse(string(tData))
 	if err != nil {
 		log.Panicln(err)
@@ -65,14 +65,22 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 func getCtx4Get(pr *project.St, eName *entity.NameSt, ent *entity.St) map[string]interface{} {
 	result := map[string]interface{}{}
 
-	if ent.IdField != nil {
-		if ent.GetParsSt != nil {
+	if ent.GetParsSt != nil {
+		if ent.IdField != nil {
+			fields := make([]*entity.FieldSt, 0, len(ent.GetParsSt.Fields))
+
 			for _, field := range ent.GetParsSt.Fields {
-				if field.Name.Origin == ent.IdField.Name.Origin {
-					result["idFieldInGetParsSt"] = field
-					break
+				if field.Name.Origin == ent.IdField.Name.Origin &&
+					(field.Type == ent.IdField.Type || field.Type == ("*"+ent.IdField.Type)) {
+					result["idFieldInGetPars"] = field
+				} else {
+					fields = append(fields, field)
 				}
 			}
+
+			result["parsFields"] = fields
+		} else {
+			result["parsFields"] = ent.GetParsSt.Fields
 		}
 	}
 
@@ -96,7 +104,7 @@ func getCtx4List(pr *project.St, eName *entity.NameSt, ent *entity.St) map[strin
 	return result
 }
 
-func getListParParser(field *entity.FieldSt) string {
+func getQueryParParser(field *entity.FieldSt) string {
 	switch field.Type {
 	case "*bool":
 		return "uQpParseBool"

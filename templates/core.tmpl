@@ -30,8 +30,8 @@ func (c *{{ .EName.Camel }}) List(ctx context.Context{{ if .Ent.ListParsSt }}, p
 }
 
 {{ if or .Ent.GetParsSt .Ent.IdField }}
-func (c *{{ .EName.Camel }}) Get(ctx context.Context, {{ if .Ent.GetParsSt }}pars *entities.{{ .EName.Camel }}GetParsSt{{ else if .Ent.IdField }}{{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}{{ end }}, errNE bool) (*entities.{{ .EName.Camel }}St, error) {
-	result, err := c.r.db.{{ .EName.Camel }}Get(ctx, {{ if .Ent.GetParsSt }}pars{{ else if .Ent.IdField }}{{ .Ent.IdField.Name.LCamel }}{{ end }})
+func (c *{{ .EName.Camel }}) Get(ctx context.Context, {{ if .Ent.GetParsSt }}pars *entities.{{ .EName.Camel }}GetParsSt{{ else }}{{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}{{ end }}, errNE bool) (*entities.{{ .EName.Camel }}St, error) {
+	result, err := c.r.db.{{ .EName.Camel }}Get(ctx, {{ if .Ent.GetParsSt }}pars{{ else }}{{ .Ent.IdField.Name.LCamel }}{{ end }})
 	if err != nil {
 		return nil, err
 	}

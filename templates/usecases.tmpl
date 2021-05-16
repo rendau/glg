@@ -32,9 +32,9 @@ func (u *St) {{ .EName.Camel }}List(ctx context.Context{{ if .Ent.ListParsSt }},
 	return items{{ if .Ctx4List.hasPagination -}}, tCount{{ end }}, nil
 }
 
-{{ if and .Ent.IdField (or (not .Ent.GetParsSt) .Ctx4Get.idFieldInGetParsSt) }}
+{{ if or .Ent.GetParsSt .Ent.IdField }}
 func (u *St) {{ .EName.Camel }}Get(ctx context.Context,
-	{{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}) (*entities.{{ .EName.Camel }}St, error) {
+	{{ if .Ent.GetParsSt }}pars *entities.{{ .EName.Camel }}GetParsSt{{ else }}{{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}{{ end }}) (*entities.{{ .EName.Camel }}St, error) {
 	var err error
 
 	ses := u.ContextGetSession(ctx)
@@ -48,13 +48,7 @@ func (u *St) {{ .EName.Camel }}Get(ctx context.Context,
 	}
 	defer func() { u.db.RollbackContextTransaction(ctx) }()
 
-	{{ if .Ent.GetParsSt -}}
-		result, err := u.cr.{{ .EName.Camel }}.Get(ctx, &entities.{{ .EName.Camel }}GetParsSt{
-			{{ .Ctx4Get.idFieldInGetParsSt.Name.Origin }}: &{{ .Ent.IdField.Name.LCamel }},
-		}, true)
-	{{- else }}
-		result, err := u.cr.{{ .EName.Camel }}.Get(ctx, {{ .Ent.IdField.Name.LCamel }}, true)
-	{{- end }}
+	result, err := u.cr.{{ .EName.Camel }}.Get(ctx, {{ if .Ent.GetParsSt }}pars{{ else }}{{ .Ent.IdField.Name.LCamel }}{{ end }}, true)
 	if err != nil {
 		return nil, err
 	}
