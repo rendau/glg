@@ -8,7 +8,50 @@ import (
 	"{{ .Pr.Uri }}/{{ .Pr.EntitiesDirPath.Rel }}"
 )
 
+// swagger:parameters hUsrGet hUsrUpdate hUsrDelete
+type docUsrPathParIdSt struct {
+	// in: path
+	Id int64 `json:"id"`
+}
+
+// swagger:parameters hUsrCreate hUsrUpdate
+type docUsrBodyParObjSt struct {
+	// in: body
+	Body entities.UsrCUSt
+}
+
+// swagger:route GET /usrs usrs hUsrList
+// Allowed to: `UsrTypeAdmin`
+// Security:
+//   token:
+// Responses:
+//   200: usrListRep
+//   400: errRep
 func (a *St) h{{ .EName.Camel }}List(w http.ResponseWriter, r *http.Request) {
+	// swagger:parameters hUsrList
+	type docReqSt struct {
+		// in:query
+		entities.PaginationParams
+
+		// in:query
+		TypeId int `json:"type_id"`
+
+		// in:query
+		OnlyCount int `json:"only_count"`
+
+		// in:query
+		Search int `json:"search"`
+	}
+
+	// swagger:response usrListRep
+	type docRepSt struct {
+		// in:body
+		Body struct {
+			DocPaginatedListRepSt
+			Results []*entities.UsrListSt `json:"results"`
+		}
+	}
+
 	{{- if .Ent.ListParsSt }}
 		{{ if not (len .Ctx4List.parsFields) }}// {{ end }}qPars := r.URL.Query()
 
@@ -34,14 +77,14 @@ func (a *St) h{{ .EName.Camel }}List(w http.ResponseWriter, r *http.Request) {
 			}
 
 			if paginated {
-				a.uRespondJSON(w, 0, &PaginatedListRepSt{
+				a.uRespondJSON(w, &PaginatedListRepSt{
 					Page:       page,
 					PageSize:   limit,
 					TotalCount: tCount,
 					Results:    result,
 				})
 			} else {
-				a.uRespondJSON(w, 0, result)
+				a.uRespondJSON(w, result)
 			}
 		{{- else }}
 
@@ -50,7 +93,7 @@ func (a *St) h{{ .EName.Camel }}List(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			a.uRespondJSON(w, 0, result)
+			a.uRespondJSON(w, result)
 		{{- end }}
 	{{- else }}
 		result, err := a.ucs.{{ .EName.Camel }}List(a.uGetRequestContext(r))
@@ -58,11 +101,26 @@ func (a *St) h{{ .EName.Camel }}List(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		a.uRespondJSON(w, 0, result)
+		a.uRespondJSON(w, result)
 	{{- end }}
 }
 
+// swagger:route POST /usrs usrs hUsrCreate
+// Allowed to: `UsrTypeAdmin`
+// Security:
+//   token:
+// Responses:
+//   200: usrCreateRep
+//   400: errRep
 func (a *St) h{{ .EName.Camel }}Create(w http.ResponseWriter, r *http.Request) {
+	// swagger:response usrCreateRep
+	type docRepSt struct {
+		// in:body
+		Body struct {
+			Id int64 `json:"id"`
+		}
+	}
+
 	reqObj := &entities.{{ .EName.Camel }}CUSt{}
 	if !a.uParseRequestJSON(w, r, reqObj) {
 		return
@@ -74,14 +132,26 @@ func (a *St) h{{ .EName.Camel }}Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	{{ if .Ent.IdField -}}
-		a.uRespondJSON(w, 0, map[string]{{ .Ent.IdField.Type -}}{"{{ .Ent.IdField.JsonName -}}": result})
+		a.uRespondJSON(w, map[string]{{ .Ent.IdField.Type -}}{"{{ .Ent.IdField.JsonName -}}": result})
 	{{- else }}
 		w.WriteHeader(200)
 	{{- end }}
 }
 
 {{ if or .Ent.GetParsSt .Ent.IdField }}
+// swagger:route GET /usrs/{id} usrs hUsrGet
+// Security:
+//   token:
+// Responses:
+//   200: usrRep
+//   400: errRep
 func (a *St) h{{ .EName.Camel }}Get(w http.ResponseWriter, r *http.Request) {
+	// swagger:response usrRep
+	type docRepSt struct {
+		// in:body
+		Body *entities.UsrSt
+	}
+
 	{{- if .Ent.GetParsSt }}
 		{{- if .Ent.GetParsSt.IdField }}
 			args := mux.Vars(r)
@@ -125,11 +195,18 @@ func (a *St) h{{ .EName.Camel }}Get(w http.ResponseWriter, r *http.Request) {
 		}
 	{{- end }}
 
-	a.uRespondJSON(w, 0, result)
+	a.uRespondJSON(w, result)
 }
 {{ end }}
 
 {{ if .Ent.IdField }}
+// swagger:route PUT /usrs/{id} usrs hUsrUpdate
+// Allowed to: `UsrTypeAdmin`
+// Security:
+//   token:
+// Responses:
+//   200:
+//   400: errRep
 func (a *St) h{{ .EName.Camel }}Update(w http.ResponseWriter, r *http.Request) {
 	args := mux.Vars(r)
 	{{- if .Ent.IdField.IsTypeInt }}
@@ -153,6 +230,13 @@ func (a *St) h{{ .EName.Camel }}Update(w http.ResponseWriter, r *http.Request) {
 {{ end }}
 
 {{ if .Ent.IdField }}
+// swagger:route DELETE /usrs/{id} usrs hUsrDelete
+// Allowed to: `UsrTypeAdmin`
+// Security:
+//   token:
+// Responses:
+//   200:
+//   400: errRep
 func (a *St) h{{ .EName.Camel }}Delete(w http.ResponseWriter, r *http.Request) {
 	args := mux.Vars(r)
 	{{- if .Ent.IdField.IsTypeInt }}
