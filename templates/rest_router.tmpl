@@ -1,0 +1,18 @@
+// {{ .EName.Snake }}
+{{ if .WithMetrics -}}
+    r.Handle("/{{ .EName.Snake }}", mh(a.h{{ .EName.Camel }}List, "/{{ .EName.Snake }}")).Methods("GET")
+    r.Handle("/{{ .EName.Snake }}", mh(a.h{{ .EName.Camel }}Create, "/{{ .EName.Snake }}")).Methods("POST")
+    {{ if .Ent.IdField -}}
+        r.Handle("/{{ .EName.Snake }}/{{ "{" }}{{ .Ent.IdField.JsonName }}:{{ .IdPathParRegex }}{{ "}" }}", mh(a.h{{ .EName.Camel }}Get, "/{{ .EName.Snake }}/:{{ .Ent.IdField.JsonName }}")).Methods("GET")
+        r.Handle("/{{ .EName.Snake }}/{{ "{" }}{{ .Ent.IdField.JsonName }}:{{ .IdPathParRegex }}{{ "}" }}", mh(a.h{{ .EName.Camel }}Update, "/{{ .EName.Snake }}/:{{ .Ent.IdField.JsonName }}")).Methods("PUT")
+        r.Handle("/{{ .EName.Snake }}/{{ "{" }}{{ .Ent.IdField.JsonName }}:{{ .IdPathParRegex }}{{ "}" }}", mh(a.h{{ .EName.Camel }}Delete, "/{{ .EName.Snake }}/:{{ .Ent.IdField.JsonName }}")).Methods("DELETE")
+    {{- end }}
+{{- else -}}
+    r.HandleFunc("/{{ .EName.Snake }}", a.h{{ .EName.Camel }}List).Methods("GET")
+    r.HandleFunc("/{{ .EName.Snake }}", a.h{{ .EName.Camel }}Create).Methods("POST")
+    {{ if .Ent.IdField -}}
+        r.HandleFunc("/{{ .EName.Snake }}/{{ "{" }}{{ .Ent.IdField.JsonName }}:{{ .IdPathParRegex }}{{ "}" }}", a.h{{ .EName.Camel }}Get).Methods("GET")
+        r.HandleFunc("/{{ .EName.Snake }}/{{ "{" }}{{ .Ent.IdField.JsonName }}:{{ .IdPathParRegex }}{{ "}" }}", a.h{{ .EName.Camel }}Update).Methods("PUT")
+        r.HandleFunc("/{{ .EName.Snake }}/{{ "{" }}{{ .Ent.IdField.JsonName }}:{{ .IdPathParRegex }}{{ "}" }}", a.h{{ .EName.Camel }}Delete).Methods("DELETE")
+    {{- end }}
+{{- end }}

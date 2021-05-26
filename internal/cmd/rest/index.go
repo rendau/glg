@@ -1,10 +1,13 @@
 package rest
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -53,6 +56,88 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 		Ent:      ent,
 		Ctx4List: getCtx4List(pr, eName, ent),
 	})
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	util.FmtFile(fPath)
+
+	registerRoutes(pr, eName, ent)
+}
+
+func registerRoutes(pr *project.St, eName *entity.NameSt, ent *entity.St) {
+	const fName = "router.go"
+
+	fPath := filepath.Join(pr.RestDirPath.Abs, fName)
+
+	// remove current routes
+
+	fDataRaw, err := ioutil.ReadFile(fPath)
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	fData := string(fDataRaw)
+
+	re := regexp.MustCompile(`(?si)(?://\s*` + eName.Snake + `\n\s*)?r.Handle(?:Func)?\("/` + eName.Snake + `["/][^\n]+\n`)
+	fData = re.ReplaceAllString(fData, "")
+
+	err = ioutil.WriteFile(fPath, []byte(fData), os.ModePerm)
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	util.FmtFile(fPath)
+
+	// register
+
+	side1, side2, ok := util.DivideFuncReturnPosSides(fPath, "router")
+	if !ok || side1 == "" || side2 == "" {
+		fmt.Println("Fail to register routes in rest. Not found 'router' function in `" + fName + "` file")
+	}
+
+	tData, err := assets.Asset("templates/rest_router.tmpl")
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	t, err := template.New("rest_router.tmp").Parse(string(tData))
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	tResultBuffer := &bytes.Buffer{}
+
+	var idPathParRegex string
+
+	if ent.IdField != nil {
+		if ent.IdField.IsTypeInt {
+			idPathParRegex = `[0-9]+`
+		} else {
+			idPathParRegex = `[^/]+`
+		}
+	}
+
+	err = t.Execute(tResultBuffer, struct {
+		Pr             *project.St
+		EName          *entity.NameSt
+		Ent            *entity.St
+		Ctx4List       map[string]interface{}
+		IdPathParRegex string
+		WithMetrics    bool
+	}{
+		Pr:             pr,
+		EName:          eName,
+		Ent:            ent,
+		Ctx4List:       getCtx4List(pr, eName, ent),
+		IdPathParRegex: idPathParRegex,
+		WithMetrics:    strings.Contains(side1, "mh := func("),
+	})
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	err = ioutil.WriteFile(fPath, []byte(side1+"\n\n"+tResultBuffer.String()+side2), os.ModePerm)
 	if err != nil {
 		log.Panicln(err)
 	}

@@ -82,7 +82,7 @@ func DivideStructEndPosSides(fPath, structName string) (string, string, bool) {
 
 	fSet := token.NewFileSet()
 
-	f, err := parser.ParseFile(fSet, filepath.Join(fPath), nil, 0)
+	f, err := parser.ParseFile(fSet, filepath.Join(fPath), fData, 0)
 	if err != nil {
 		log.Panicln(err)
 	}
@@ -107,6 +107,41 @@ func DivideStructEndPosSides(fPath, structName string) (string, string, bool) {
 	return "", "", false
 }
 
+func DivideInterfaceEndPosSides(fPath, interfaceName string) (string, string, bool) {
+	fDataRaw, err := ioutil.ReadFile(fPath)
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	fData := string(fDataRaw)
+
+	fSet := token.NewFileSet()
+
+	f, err := parser.ParseFile(fSet, filepath.Join(fPath), fData, 0)
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	for _, decl := range f.Decls {
+		switch gDecl := decl.(type) {
+		case *ast.GenDecl:
+			if gDecl.Tok == token.TYPE && len(gDecl.Specs) == 1 {
+				tSpec := gDecl.Specs[0].(*ast.TypeSpec)
+				if strings.Contains(strings.ToLower(tSpec.Name.Name), strings.ToLower(interfaceName)) {
+					switch decl := tSpec.Type.(type) {
+					case *ast.InterfaceType:
+						if ind := StringGetLastNonWhiteSpaceIndex(fData[:decl.Methods.Closing-1]); ind >= 0 {
+							return fData[:ind], fData[ind:], true
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return "", "", false
+}
+
 func DivideFuncReturnPosSides(fPath, funcName string) (string, string, bool) {
 	fDataRaw, err := ioutil.ReadFile(fPath)
 	if err != nil {
@@ -117,7 +152,7 @@ func DivideFuncReturnPosSides(fPath, funcName string) (string, string, bool) {
 
 	fSet := token.NewFileSet()
 
-	f, err := parser.ParseFile(fSet, filepath.Join(fPath), nil, 0)
+	f, err := parser.ParseFile(fSet, filepath.Join(fPath), fData, 0)
 	if err != nil {
 		log.Panicln(err)
 	}
