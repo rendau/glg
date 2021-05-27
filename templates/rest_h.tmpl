@@ -167,7 +167,7 @@ func (a *St) h{{ .EName.Camel }}Get(w http.ResponseWriter, r *http.Request) {
 			{{- end }}
 		}
 
-	{{ end -}}
+	{{ end }}
 
 	// swagger:response {{ .EName.LCamel }}Rep
 	type docRepSt struct {
