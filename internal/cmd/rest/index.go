@@ -176,6 +176,8 @@ func getQueryParParser(field *entity.FieldSt) string {
 		return "uQpParseTime"
 	case "*[]int64":
 		return "uQpParseInt64Slice"
+	case "*string":
+		return "uQpParseString"
 
 	case "bool":
 		return "uQpParseBoolV"
@@ -187,6 +189,8 @@ func getQueryParParser(field *entity.FieldSt) string {
 		return "uQpParseFloat64V"
 	case "[]int64":
 		return "uQpParseInt64SliceV"
+	case "string":
+		return "uQpParseStringV"
 	}
 
 	return ""

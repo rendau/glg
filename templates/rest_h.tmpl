@@ -8,51 +8,57 @@ import (
 	"{{ .Pr.Uri }}/{{ .Pr.EntitiesDirPath.Rel }}"
 )
 
-// swagger:parameters hUsrGet hUsrUpdate hUsrDelete
-type docUsrPathParIdSt struct {
+{{ if .Ent.IdField }}
+// swagger:parameters h{{ .EName.Camel }}Get h{{ .EName.Camel }}Update h{{ .EName.Camel }}Delete
+type doc{{ .EName.Camel }}PathParIdSt struct {
 	// in: path
-	Id int64 `json:"id"`
+	{{ .Ent.IdField.Name.Origin }} {{ if .Ent.IdField.IsTypeInt -}}int64{{ else }}string{{ end }} `json:"{{ .Ent.IdField.JsonName }}"`
 }
+{{ end }}
 
-// swagger:parameters hUsrCreate hUsrUpdate
-type docUsrBodyParObjSt struct {
+// swagger:parameters h{{ .EName.Camel }}Create h{{ .EName.Camel }}Update
+type doc{{ .EName.Camel }}BodyParObjSt struct {
 	// in: body
-	Body entities.UsrCUSt
+	Body entities.{{ .EName.Camel }}CUSt
 }
 
-// swagger:route GET /usrs usrs hUsrList
-// Allowed to: `UsrTypeAdmin`
+// swagger:route GET /{{ .EName.Snake }} {{ .EName.Snake }} h{{ .EName.Camel }}List
 // Security:
 //   token:
 // Responses:
-//   200: usrListRep
+//   200: {{ .EName.LCamel }}ListRep
 //   400: errRep
 func (a *St) h{{ .EName.Camel }}List(w http.ResponseWriter, r *http.Request) {
-	// swagger:parameters hUsrList
-	type docReqSt struct {
-		// in:query
-		entities.PaginationParams
+	{{- if .Ent.ListParsSt }}
+		// swagger:parameters h{{ .EName.Camel }}List
+		type docReqSt struct {
+			{{- if .Ctx4List.hasPagination }}
+				// in:query
+				entities.PaginationParams
+			{{- end }}
+			{{- range $field := .Ctx4List.parsFields }}
+				{{- if getQueryParParser $field }}
+					// in:query
+					{{ $field.Name.Origin }} {{ $field.Type }} `json:"{{ $field.Name.Snake }}"`
+				{{- end }}
+			{{- end }}
+		}
+	{{- end }}
 
-		// in:query
-		TypeId int `json:"type_id"`
-
-		// in:query
-		OnlyCount int `json:"only_count"`
-
-		// in:query
-		Search int `json:"search"`
-	}
-
-	// swagger:response usrListRep
+	// swagger:response {{ .EName.LCamel }}ListRep
 	type docRepSt struct {
 		// in:body
-		Body struct {
-			DocPaginatedListRepSt
-			Results []*entities.UsrListSt `json:"results"`
-		}
+		{{- if .Ctx4List.hasPagination }}
+			Body struct {
+				DocPaginatedListRepSt
+				Results []*entities.{{ .EName.Camel }}ListSt `json:"results"`
+			}
+		{{- else }}
+			Body []*entities.{{ .EName.Camel }}ListSt
+		{{- end }}
 	}
 
-	{{- if .Ent.ListParsSt }}
+	{{ if .Ent.ListParsSt -}}
 		{{ if not (len .Ctx4List.parsFields) }}// {{ end }}qPars := r.URL.Query()
 
 		pars := &entities.{{ .EName.Camel }}ListParsSt{
@@ -105,21 +111,23 @@ func (a *St) h{{ .EName.Camel }}List(w http.ResponseWriter, r *http.Request) {
 	{{- end }}
 }
 
-// swagger:route POST /usrs usrs hUsrCreate
-// Allowed to: `UsrTypeAdmin`
+// swagger:route POST /{{ .EName.Snake }} {{ .EName.Snake }} h{{ .EName.Camel }}Create
 // Security:
 //   token:
 // Responses:
-//   200: usrCreateRep
+//   200: {{- if .Ent.IdField }} {{ .EName.LCamel }}CreateRep{{ end }}
 //   400: errRep
 func (a *St) h{{ .EName.Camel }}Create(w http.ResponseWriter, r *http.Request) {
-	// swagger:response usrCreateRep
-	type docRepSt struct {
-		// in:body
-		Body struct {
-			Id int64 `json:"id"`
+	{{ if .Ent.IdField -}}
+		// swagger:response {{ .EName.LCamel }}CreateRep
+		type docRepSt struct {
+			// in:body
+			Body struct {
+				{{ .Ent.IdField.Name.Origin }} {{ if .Ent.IdField.IsTypeInt -}}int64{{ else }}string{{ end }} `json:"{{ .Ent.IdField.JsonName }}"`
+			}
 		}
-	}
+
+	{{ end -}}
 
 	reqObj := &entities.{{ .EName.Camel }}CUSt{}
 	if !a.uParseRequestJSON(w, r, reqObj) {
@@ -139,20 +147,35 @@ func (a *St) h{{ .EName.Camel }}Create(w http.ResponseWriter, r *http.Request) {
 }
 
 {{ if or .Ent.GetParsSt .Ent.IdField }}
-// swagger:route GET /usrs/{id} usrs hUsrGet
+// swagger:route GET /{{ .EName.Snake }}/{{ if .Ent.IdField }}{{ "{" }}{{ .Ent.IdField.JsonName }}{{ "}" }}{{ else }}one{{ end }} {{ .EName.Snake }} h{{ .EName.Camel }}Get
 // Security:
 //   token:
 // Responses:
-//   200: usrRep
+//   200: {{ .EName.LCamel }}Rep
 //   400: errRep
 func (a *St) h{{ .EName.Camel }}Get(w http.ResponseWriter, r *http.Request) {
-	// swagger:response usrRep
+	{{- if .Ent.GetParsSt }}
+		// swagger:parameters h{{ .EName.Camel }}Get
+		type docReqSt struct {
+			{{- range $field := .Ent.GetParsSt.Fields }}
+				{{- if not $field.IsId }}
+					{{- if getQueryParParser $field }}
+						// in:query
+						{{ $field.Name.Origin }} {{ $field.Type }} `json:"{{ $field.Name.Snake }}"`
+					{{- end }}
+				{{- end }}
+			{{- end }}
+		}
+
+	{{ end -}}
+
+	// swagger:response {{ .EName.LCamel }}Rep
 	type docRepSt struct {
 		// in:body
-		Body *entities.UsrSt
+		Body *entities.{{ .EName.Camel }}St
 	}
 
-	{{- if .Ent.GetParsSt }}
+	{{ if .Ent.GetParsSt -}}
 		{{- if .Ent.GetParsSt.IdField }}
 			args := mux.Vars(r)
 			{{- if .Ent.IdField.IsTypeInt }}
@@ -200,8 +223,7 @@ func (a *St) h{{ .EName.Camel }}Get(w http.ResponseWriter, r *http.Request) {
 {{ end }}
 
 {{ if .Ent.IdField }}
-// swagger:route PUT /usrs/{id} usrs hUsrUpdate
-// Allowed to: `UsrTypeAdmin`
+// swagger:route PUT /{{ .EName.Snake }}/{{ "{" }}{{ .Ent.IdField.JsonName }}{{ "}" }} {{ .EName.Snake }} h{{ .EName.Camel }}Update
 // Security:
 //   token:
 // Responses:
@@ -230,8 +252,7 @@ func (a *St) h{{ .EName.Camel }}Update(w http.ResponseWriter, r *http.Request) {
 {{ end }}
 
 {{ if .Ent.IdField }}
-// swagger:route DELETE /usrs/{id} usrs hUsrDelete
-// Allowed to: `UsrTypeAdmin`
+// swagger:route DELETE /{{ .EName.Snake }}/{{ "{" }}{{ .Ent.IdField.JsonName }}{{ "}" }} {{ .EName.Snake }} h{{ .EName.Camel }}Delete
 // Security:
 //   token:
 // Responses:
