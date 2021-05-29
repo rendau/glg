@@ -15,6 +15,13 @@ func (u *St) {{ .EName.Camel }}List(ctx context.Context{{ if .Ent.ListParsSt }},
 		return nil{{ if .Ctx4List.hasPagination -}}, 0{{ end }}, err
 	}
 
+	{{- if .Ctx4List.hasPagination }}
+
+		if err = util.RequirePageSize(pars.PaginationParams, 0); err != nil {
+			return nil, 0, err
+		}
+	{{- end }}
+
 	if ctx, err = u.db.ContextWithTransaction(ctx); err != nil {
 		return nil{{ if .Ctx4List.hasPagination -}}, 0{{ end }}, err
 	}
