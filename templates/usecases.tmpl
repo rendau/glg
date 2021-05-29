@@ -22,21 +22,7 @@ func (u *St) {{ .EName.Camel }}List(ctx context.Context{{ if .Ent.ListParsSt }},
 		}
 	{{- end }}
 
-	if ctx, err = u.db.ContextWithTransaction(ctx); err != nil {
-		return nil{{ if .Ctx4List.hasPagination -}}, 0{{ end }}, err
-	}
-	defer func() { u.db.RollbackContextTransaction(ctx) }()
-
-	items{{ if .Ctx4List.hasPagination -}}, tCount{{ end }}, err := u.cr.{{ .EName.Camel }}.List(ctx{{ if .Ent.ListParsSt }}, pars{{ end }})
-	if err != nil {
-		return nil{{ if .Ctx4List.hasPagination -}}, 0{{ end }}, err
-	}
-
-	if err = u.db.CommitContextTransaction(ctx); err != nil {
-		return nil{{ if .Ctx4List.hasPagination -}}, 0{{ end }}, err
-	}
-
-	return items{{ if .Ctx4List.hasPagination -}}, tCount{{ end }}, nil
+	return u.cr.{{ .EName.Camel }}.List(ctx{{ if .Ent.ListParsSt }}, pars{{ end }})
 }
 
 {{ if or .Ent.GetParsSt .Ent.IdField }}
@@ -50,21 +36,7 @@ func (u *St) {{ .EName.Camel }}Get(ctx context.Context,
 		return nil, err
 	}
 
-	if ctx, err = u.db.ContextWithTransaction(ctx); err != nil {
-		return nil, err
-	}
-	defer func() { u.db.RollbackContextTransaction(ctx) }()
-
-	result, err := u.cr.{{ .EName.Camel }}.Get(ctx, {{ if .Ent.GetParsSt }}pars{{ else }}{{ .Ent.IdField.Name.LCamel }}{{ end }}, true)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = u.db.CommitContextTransaction(ctx); err != nil {
-		return nil, err
-	}
-
-	return result, nil
+	return u.cr.{{ .EName.Camel }}.Get(ctx, {{ if .Ent.GetParsSt }}pars{{ else }}{{ .Ent.IdField.Name.LCamel }}{{ end }}, true)
 }
 {{ end }}
 
