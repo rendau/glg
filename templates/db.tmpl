@@ -249,7 +249,7 @@ func (d *St) {{ .EName.Camel }}GetCUArgs(obj *entities.{{ .EName.Camel }}CUSt) (
         {{- if $field.IsTypePointer }}
 
             if obj.{{ $field.Name.Origin }} != nil {
-                result["{{ $field.JsonName }}"] = *obj.{{ $field.Name.Origin }}
+                result["{{ $field.Name.Snake }}"] = *obj.{{ $field.Name.Origin }}
             }
         {{- end }}
     {{- end }}
