@@ -115,24 +115,33 @@ func scanableFields(fields []*entity.FieldSt) []*entity.FieldSt {
 
 	for _, f := range fields {
 		switch f.Type {
-		case "bool", "string":
+		case "bool", "string",
+			"*bool", "*string":
 			result = append(result, f)
-		case "int", "int8", "int16", "int32", "int64":
+		case "int", "int8", "int16", "int32", "int64",
+			"*int", "*int8", "*int16", "*int32", "*int64":
 			result = append(result, f)
-		case "uint", "uint8", "uint16", "uint32", "uint64":
+		case "uint", "uint8", "uint16", "uint32", "uint64",
+			"*uint", "*uint8", "*uint16", "*uint32", "*uint64":
 			result = append(result, f)
-		case "float32", "float64":
+		case "float32", "float64",
+			"*float32", "*float64":
 			result = append(result, f)
-		case "time.Time":
+		case "time.Time",
+			"*time.Time":
 			result = append(result, f)
 
-		case "[]bool", "[]string":
+		case "[]bool", "[]string",
+			"*[]bool", "*[]string":
 			result = append(result, f)
-		case "[]int", "[]int8", "[]int16", "[]int32", "[]int64":
+		case "[]int", "[]int8", "[]int16", "[]int32", "[]int64",
+			"*[]int", "*[]int8", "*[]int16", "*[]int32", "*[]int64":
 			result = append(result, f)
-		case "[]uint", "[]uint8", "[]uint16", "[]uint32", "[]uint64":
+		case "[]uint", "[]uint8", "[]uint16", "[]uint32", "[]uint64",
+			"*[]uint", "*[]uint8", "*[]uint16", "*[]uint32", "*[]uint64":
 			result = append(result, f)
-		case "[]float32", "[]float64":
+		case "[]float32", "[]float64",
+			"*[]float32", "*[]float64":
 			result = append(result, f)
 		}
 	}
