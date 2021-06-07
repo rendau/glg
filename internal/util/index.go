@@ -15,7 +15,10 @@ import (
 )
 
 var (
-	camelCaseRegexp         = regexp.MustCompile(`([a-z0-9])([A-Z])`)
+	camelCaseRegexp1        = regexp.MustCompile(`([A-Z]+)([A-Z])([a-z0-9])`)
+	camelCaseRegexp2        = regexp.MustCompile(`([A-Z])([A-Z]+)`)
+	camelCaseRegexp3        = regexp.MustCompile(`([a-z0-9])([A-Z])`)
+	camelCaseRegexp4        = regexp.MustCompile(`__+`)
 	nonWhiteSpaceCharRegexp = regexp.MustCompile(`\S`)
 )
 
@@ -57,7 +60,12 @@ func Case2Camel(v string, local bool) string {
 }
 
 func Case2Snake(v string) string {
-	return strings.ToLower(camelCaseRegexp.ReplaceAllString(v, "${1}_${2}"))
+	v = camelCaseRegexp1.ReplaceAllString(v, `${1}_${2}${3}`)
+	v = camelCaseRegexp2.ReplaceAllString(v, `_${1}${2}_`)
+	v = camelCaseRegexp3.ReplaceAllString(v, `${1}_${2}`)
+	v = camelCaseRegexp4.ReplaceAllString(v, "_")
+
+	return strings.ToLower(strings.Trim(v, "_"))
 }
 
 func FmtFile(fPath string) {

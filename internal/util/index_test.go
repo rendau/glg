@@ -18,6 +18,10 @@ func TestCaseSnake2Camel(t *testing.T) {
 func TestCaseCamel2Snake(t *testing.T) {
 	require.Equal(t, "asd", Case2Snake("Asd"))
 	require.Equal(t, "asd_dsa_qwe", Case2Snake("AsdDsaQwe"))
-	require.Equal(t, "jsonparser", Case2Snake("JSONParser"))
+	require.Equal(t, "json_parser", Case2Snake("JSONParser"))
 	require.Equal(t, "asd_dsa_qwe", Case2Snake("asd_dsa_qwe"))
+	require.Equal(t, "a_name", Case2Snake("AName"))
+	require.Equal(t, "name_json", Case2Snake("NameJSON"))
+	require.Equal(t, "asdf", Case2Snake("ASDF"))
+	require.Equal(t, "xx_asdf", Case2Snake("xxASDF"))
 }
