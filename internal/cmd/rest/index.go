@@ -2,6 +2,7 @@ package rest
 
 import (
 	"bytes"
+	_ "embed"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -11,11 +12,16 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/rendau/glg/assets"
 	"github.com/rendau/glg/internal/entity"
 	"github.com/rendau/glg/internal/project"
 	"github.com/rendau/glg/internal/util"
 )
+
+//go:embed tmplHandlers.tmpl
+var tmpHandlers string
+
+//go:embed tmplRouter.tmpl
+var tmpRouter string
 
 func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 	var err error
@@ -25,14 +31,9 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 		return
 	}
 
-	tData, err := assets.Asset("templates/rest_h.tmpl")
-	if err != nil {
-		log.Panicln(err)
-	}
-
 	t, err := template.New("rest.tmp").Funcs(template.FuncMap{
 		"getQueryParParser": getQueryParParser,
-	}).Parse(string(tData))
+	}).Parse(tmpHandlers)
 	if err != nil {
 		log.Panicln(err)
 	}
@@ -96,12 +97,7 @@ func registerRoutes(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 		fmt.Println("Fail to register routes in rest. Not found 'router' function in `" + fName + "` file")
 	}
 
-	tData, err := assets.Asset("templates/rest_router.tmpl")
-	if err != nil {
-		log.Panicln(err)
-	}
-
-	t, err := template.New("rest_router.tmp").Parse(string(tData))
+	t, err := template.New("rest_router.tmp").Parse(tmpRouter)
 	if err != nil {
 		log.Panicln(err)
 	}

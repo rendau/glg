@@ -2,6 +2,7 @@ package interfaces
 
 import (
 	"bytes"
+	_ "embed"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -11,11 +12,13 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/rendau/glg/assets"
 	"github.com/rendau/glg/internal/entity"
 	"github.com/rendau/glg/internal/project"
 	"github.com/rendau/glg/internal/util"
 )
+
+//go:embed tmpl.tmpl
+var tmp string
 
 func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 	// var err error
@@ -39,12 +42,7 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 		fmt.Println("Fail to register module in db-interfaces. Not found 'Db' interface type in `" + fPath + "` file")
 	}
 
-	tData, err := assets.Asset("templates/interfaces.tmpl")
-	if err != nil {
-		log.Panicln(err)
-	}
-
-	t, err := template.New("interfaces.tmp").Parse(string(tData))
+	t, err := template.New("interfaces.tmp").Parse(tmp)
 	if err != nil {
 		log.Panicln(err)
 	}

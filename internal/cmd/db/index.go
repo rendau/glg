@@ -1,6 +1,7 @@
 package db
 
 import (
+	_ "embed"
 	"fmt"
 	"log"
 	"os"
@@ -8,11 +9,13 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/rendau/glg/assets"
 	"github.com/rendau/glg/internal/entity"
 	"github.com/rendau/glg/internal/project"
 	"github.com/rendau/glg/internal/util"
 )
+
+//go:embed tmpl.tmpl
+var tmp string
 
 func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 	var err error
@@ -22,15 +25,10 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 		return
 	}
 
-	tData, err := assets.Asset("templates/db.tmpl")
-	if err != nil {
-		log.Panicln(err)
-	}
-
 	t, err := template.New("db.tmp").Funcs(template.FuncMap{
 		"parsFieldAssocName": parsFieldAssocName,
 		"fieldSubQueryForIn": fieldSubQueryForIn,
-	}).Parse(string(tData))
+	}).Parse(tmp)
 	if err != nil {
 		log.Panicln(err)
 	}
