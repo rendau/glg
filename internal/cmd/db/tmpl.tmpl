@@ -80,6 +80,15 @@ func (d *St) {{ .EName.Camel }}List(ctx context.Context{{ if .Ent.ListParsSt -}}
                             qWhere += ` and t.{{ parsFieldAssocName $.Ent $field }} in {{ fieldSubQueryForIn $field $field.Name.Snake }}`
                             args["{{ $field.Name.Snake }}"] = *pars.{{ $field.Name.Origin }}
                         }
+                    {{- else if and $field.IsNullable $field.PVZeroValue }}
+                        if pars.{{ $field.Name.Origin }} != nil {
+                            if *pars.{{ $field.Name.Origin }} == {{ $field.PVZeroValue }} {
+                                qWhere += ` and t.{{ parsFieldAssocName $.Ent $field }} is null`
+                            } else {
+                                qWhere += ` and t.{{ parsFieldAssocName $.Ent $field }} = {{ "${" }}{{ $field.Name.Snake }}{{ "}" }}`
+                                args["{{ $field.Name.Snake }}"] = *pars.{{ $field.Name.Origin }}
+                            }
+                        }
                     {{- else }}
                         if pars.{{ $field.Name.Origin }} != nil {
                             qWhere += ` and t.{{ parsFieldAssocName $.Ent $field }} = {{ "${" }}{{ $field.Name.Snake }}{{ "}" }}`
