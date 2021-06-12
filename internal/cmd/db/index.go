@@ -26,8 +26,9 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 	}
 
 	t, err := template.New("db.tmp").Funcs(template.FuncMap{
-		"parsFieldAssocName": parsFieldAssocName,
-		"fieldSubQueryForIn": fieldSubQueryForIn,
+		"parsFieldAssocName":   parsFieldAssocName,
+		"fieldSubQueryForIn":   fieldSubQueryForIn,
+		"fieldPgTypeNullValue": fieldPgTypeNullValue,
 	}).Parse(tmp)
 	if err != nil {
 		log.Panicln(err)
@@ -195,4 +196,21 @@ func tableName(eName *entity.NameSt) string {
 	}
 
 	return eName.Snake
+}
+
+func fieldPgTypeNullValue(field *entity.FieldSt) string {
+	switch field.Type {
+	case "*int", "*int8", "*int16",
+		"*uint", "*uint8", "*uint16":
+		return `pgtype.Int2{Status: pgtype.Null}`
+	case "*int32", "*uint32":
+		return `pgtype.Int4{Status: pgtype.Null}`
+	case "*int64", "*uint64":
+		return `pgtype.Int8{Status: pgtype.Null}`
+	case "*float32":
+		return `pgtype.Float4{Status: pgtype.Null}`
+	case "*float64":
+		return `pgtype.Float8{Status: pgtype.Null}`
+	}
+	return ""
 }

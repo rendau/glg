@@ -29,6 +29,8 @@ func Parse(dirPath string, eName *NameSt) *St {
 
 	FindOutIdField(result)
 
+	SyncNullableFields(result)
+
 	return result
 }
 
@@ -79,7 +81,7 @@ func ParseSt(o *St, stName string, eName *NameSt, expr ast.Expr) {
 		}
 
 		for _, f := range decl.Fields.List {
-			field, isIdField := ParseField(f)
+			field, isIdField, isNullableField := ParseField(f)
 			if field != nil {
 				stInst.Fields = append(stInst.Fields, field)
 
@@ -87,12 +89,16 @@ func ParseSt(o *St, stName string, eName *NameSt, expr ast.Expr) {
 					o.IdField = field
 					stInst.IdField = field
 				}
+
+				if stInst == o.MainSt && (isNullableField || field.IsTypePointer) {
+					field.IsNullable = true
+				}
 			}
 		}
 	}
 }
 
-func ParseField(f *ast.Field) (*FieldSt, bool) {
+func ParseField(f *ast.Field) (*FieldSt, bool, bool) {
 	result := &FieldSt{}
 
 	if len(f.Names) == 1 {
@@ -111,6 +117,7 @@ func ParseField(f *ast.Field) (*FieldSt, bool) {
 	result.IsTypeInt = strings.HasPrefix(result.Type, "int")
 
 	var isIdField bool
+	var isNullableField bool
 
 	if f.Tag != nil {
 		result.Tag = f.Tag.Value
@@ -119,11 +126,16 @@ func ParseField(f *ast.Field) (*FieldSt, bool) {
 		if TagHasGlgId(result.Tag) {
 			isIdField = true
 		}
+		if TagHasGlgNullable(result.Tag) {
+			isNullableField = true
+		}
 	}
 
 	result.DefineZeroValue()
 
-	return result, isIdField
+	result.DefinePVZeroValue()
+
+	return result, isIdField, isNullableField
 }
 
 func ParseType(expr ast.Expr) string {
@@ -178,6 +190,18 @@ func TagHasGlgId(tag string) bool {
 	return false
 }
 
+func TagHasGlgNullable(tag string) bool {
+	if fRes := glgTagRegexp.FindStringSubmatch(tag); len(fRes) > 1 {
+		for _, w := range strings.Split(fRes[1], ",") {
+			if w == "nullable" {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 func FindOutIdField(o *St) {
 	if o.IdField == nil {
 		for _, field := range o.MainSt.Fields {
@@ -201,6 +225,26 @@ func FindOutIdField(o *St) {
 					(field.Type == o.IdField.Type || field.Type == ("*"+o.IdField.Type)) {
 					field.IsId = true
 					st.IdField = field
+				}
+			}
+		}
+	}
+}
+
+func SyncNullableFields(o *St) {
+	for _, field := range o.MainSt.Fields {
+		if !field.IsNullable {
+			continue
+		}
+
+		for _, st := range []*StructSt{o.GetParsSt, o.ListSt, o.ListParsSt, o.CuSt} {
+			if st == nil {
+				continue
+			}
+
+			for _, f := range st.Fields {
+				if f.Name.Origin == field.Name.Origin {
+					f.IsNullable = true
 				}
 			}
 		}

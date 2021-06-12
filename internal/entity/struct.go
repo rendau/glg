@@ -37,7 +37,9 @@ type FieldSt struct {
 	Tag           string
 	JsonName      string
 	ZeroValue     string
+	PVZeroValue   string
 	IsId          bool
+	IsNullable    bool
 }
 
 func (o *NameSt) Normalize() {
@@ -114,5 +116,16 @@ func (o *FieldSt) DefineZeroValue() {
 		o.ZeroValue = `""`
 	default:
 		o.ZeroValue = "nil"
+	}
+}
+
+func (o *FieldSt) DefinePVZeroValue() {
+	switch o.Type {
+	case "*int", "*int8", "*int16", "*int32", "*int64",
+		"*uint", "*uint8", "*uint16", "*uint32", "*uint64",
+		"*float32", "*float64":
+		o.PVZeroValue = "0"
+	default:
+		o.PVZeroValue = ""
 	}
 }

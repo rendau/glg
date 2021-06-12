@@ -248,9 +248,19 @@ func (d *St) {{ .EName.Camel }}GetCUArgs(obj *entities.{{ .EName.Camel }}CUSt) (
     {{- range $field := .Ctx4CuArgs.fields }}
         {{- if $field.IsTypePointer }}
 
-            if obj.{{ $field.Name.Origin }} != nil {
-                result["{{ $field.Name.Snake }}"] = *obj.{{ $field.Name.Origin }}
-            }
+            {{ if and $field.IsNullable $field.PVZeroValue (fieldPgTypeNullValue $field) -}}
+                if obj.{{ $field.Name.Origin }} != nil {
+                    if *obj.{{ $field.Name.Origin }} == {{ $field.PVZeroValue }} {
+                        result["{{ $field.Name.Snake }}"] = {{ fieldPgTypeNullValue $field }}
+                    } else {
+                        result["{{ $field.Name.Snake }}"] = *obj.{{ $field.Name.Origin }}
+                    }
+                }
+            {{- else }}
+                if obj.{{ $field.Name.Origin }} != nil {
+                    result["{{ $field.Name.Snake }}"] = *obj.{{ $field.Name.Origin }}
+                }
+            {{- end }}
         {{- end }}
     {{- end }}
 
