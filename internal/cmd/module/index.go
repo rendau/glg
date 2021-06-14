@@ -16,7 +16,7 @@ func Run(dir, name string) {
 	pr := project.Discover(dir)
 
 	eName := &entity.NameSt{Origin: name}
-	eName.Normalize()
+	eName.Normalize(true)
 
 	if pr.EntitiesDirPath == nil {
 		log.Fatalln("entity file not found")

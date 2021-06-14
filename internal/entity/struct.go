@@ -42,11 +42,13 @@ type FieldSt struct {
 	IsNullable    bool
 }
 
-func (o *NameSt) Normalize() {
+func (o *NameSt) Normalize(changeOrigin bool) {
 	if o.Origin != "" {
 		o.Snake = util.Case2Snake(o.Origin)
-		o.Origin = util.Case2Camel(o.Snake, false)
-		o.Camel = util.Case2Camel(o.Snake, false)
+		if changeOrigin {
+			o.Origin = util.Case2Camel(o.Snake, false)
+		}
+		o.Camel = o.Origin
 		o.LCamel = util.Case2Camel(o.Snake, true)
 	} else {
 		o.Camel = ""

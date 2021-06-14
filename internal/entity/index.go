@@ -103,7 +103,7 @@ func ParseField(f *ast.Field) (*FieldSt, bool, bool) {
 
 	if len(f.Names) == 1 {
 		result.Name.Origin = f.Names[0].Name
-		result.Name.Normalize()
+		result.Name.Normalize(false)
 	}
 
 	result.Type = ParseType(f.Type)
