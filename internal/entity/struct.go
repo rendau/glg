@@ -24,6 +24,7 @@ type NameSt struct {
 }
 
 type StructSt struct {
+	Name    NameSt
 	Fields  []*FieldSt
 	IdField *FieldSt
 }
@@ -34,6 +35,7 @@ type FieldSt struct {
 	IsTypePointer bool
 	IsTypeSlice   bool
 	IsTypeInt     bool
+	IsEmbedded    bool
 	Tag           string
 	JsonName      string
 	ZeroValue     string
@@ -71,33 +73,12 @@ func (o *St) String() string {
 		result = "Entity:\n"
 	}
 
-	if o.MainSt != nil {
-		result += "  " + eName + "St:\n"
-		for _, f := range o.MainSt.Fields {
-			result += fmt.Sprintln("    ", *f)
+	for _, st := range []*StructSt{o.MainSt, o.GetParsSt, o.ListSt, o.ListParsSt, o.CuSt} {
+		if st == nil {
+			continue
 		}
-	}
-	if o.GetParsSt != nil {
-		result += "  " + eName + "GetParsSt:\n"
-		for _, f := range o.GetParsSt.Fields {
-			result += fmt.Sprintln("    ", *f)
-		}
-	}
-	if o.ListSt != nil {
-		result += "  " + eName + "ListSt:\n"
-		for _, f := range o.ListSt.Fields {
-			result += fmt.Sprintln("    ", *f)
-		}
-	}
-	if o.ListParsSt != nil {
-		result += "  " + eName + "ListParsSt:\n"
-		for _, f := range o.ListParsSt.Fields {
-			result += fmt.Sprintln("    ", *f)
-		}
-	}
-	if o.CuSt != nil {
-		result += "  " + eName + "CUSt:\n"
-		for _, f := range o.CuSt.Fields {
+		result += "  " + st.Name.Origin + ":\n"
+		for _, f := range st.Fields {
 			result += fmt.Sprintln("    ", *f)
 		}
 	}

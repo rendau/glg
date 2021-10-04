@@ -31,6 +31,8 @@ func Parse(dirPath string, eName *NameSt) *St {
 
 	SyncNullableFields(result)
 
+	RefillEmbedded(result)
+
 	return result
 }
 
@@ -80,6 +82,9 @@ func ParseSt(o *St, stName string, eName *NameSt, expr ast.Expr) {
 			return
 		}
 
+		stInst.Name.Origin = stName
+		stInst.Name.Normalize(false)
+
 		for _, f := range decl.Fields.List {
 			field, isIdField, isNullableField := ParseField(f)
 			if field != nil {
@@ -104,6 +109,8 @@ func ParseField(f *ast.Field) (*FieldSt, bool, bool) {
 	if len(f.Names) == 1 {
 		result.Name.Origin = f.Names[0].Name
 		result.Name.Normalize(false)
+	} else {
+		result.IsEmbedded = true
 	}
 
 	result.Type = ParseType(f.Type)
@@ -215,7 +222,7 @@ func FindOutIdField(o *St) {
 
 	// set IsId flag on other struct fields
 	if o.IdField != nil {
-		for _, st := range []*StructSt{o.GetParsSt, o.ListSt, o.ListParsSt} {
+		for _, st := range []*StructSt{o.GetParsSt, o.ListSt, o.ListParsSt, o.CuSt} {
 			if st == nil {
 				continue
 			}
@@ -246,6 +253,41 @@ func SyncNullableFields(o *St) {
 				if f.Name.Origin == field.Name.Origin {
 					f.IsNullable = true
 				}
+			}
+		}
+	}
+}
+
+func RefillEmbedded(o *St) {
+	for _, st1 := range []*StructSt{o.MainSt, o.GetParsSt, o.ListSt, o.ListParsSt, o.CuSt} {
+		if st1 == nil {
+			continue
+		}
+
+		for f1i, f1 := range st1.Fields {
+			if !f1.IsEmbedded {
+				continue
+			}
+
+			for _, st2 := range []*StructSt{o.MainSt, o.GetParsSt, o.ListSt, o.ListParsSt, o.CuSt} {
+				if st2 == nil {
+					continue
+				}
+				if st2.Name.Origin != f1.Type {
+					continue
+				}
+
+				fields := make([]*FieldSt, 0, len(st1.Fields)+len(st2.Fields))
+
+				fields = append(fields, st1.Fields[:f1i]...)
+				fields = append(fields, st2.Fields...)
+				fields = append(fields, st1.Fields[f1i+1:]...)
+
+				st1.Fields = fields
+
+				RefillEmbedded(o)
+
+				return
 			}
 		}
 	}
