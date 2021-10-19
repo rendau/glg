@@ -14,11 +14,13 @@ func New{{ .EName.Camel }}(r *St) *{{ .EName.Camel }} {
 	return &{{ .EName.Camel }}{r: r}
 }
 
-func (c *{{ .EName.Camel }}) ValidateCU(ctx context.Context, obj *entities.{{ .EName.Camel }}CUSt{{ if .Ent.IdField }}, {{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}{{ end }}) error {
-	{{ if .Ent.IdField }}// forCreate := {{ .Ent.IdField.Name.LCamel }} == {{ .Ent.IdField.ZeroValue }}
+{{ if or .Ent.IdField .Ent.GetParsSt }}
+func (c *{{ .EName.Camel }}) ValidateCU(ctx context.Context, obj *entities.{{ .EName.Camel }}CUSt, {{ if .Ent.IdField }}{{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}{{ else }}pars *entities.{{ .EName.Camel }}GetParsSt{{ end }}) error {
+	// forCreate := {{ if .Ent.IdField }}{{ .Ent.IdField.Name.LCamel }} == {{ .Ent.IdField.ZeroValue }}{{ else }}pars == nil{{ end }}
 
-	{{ end }}return nil
+	return nil
 }
+{{ end }}
 
 func (c *{{ .EName.Camel }}) List(ctx context.Context{{ if .Ent.ListParsSt }}, pars *entities.{{ .EName.Camel }}ListParsSt{{ end }}) ([]*entities.{{ .EName.Camel }}ListSt{{ if .Ctx4List.hasPagination -}}, int64{{ end }}, error) {
 	items{{ if .Ctx4List.hasPagination -}}, tCount{{ end }}, err := c.r.db.{{ .EName.Camel }}List(ctx{{ if .Ent.ListParsSt }}, pars{{ end }})
@@ -29,9 +31,9 @@ func (c *{{ .EName.Camel }}) List(ctx context.Context{{ if .Ent.ListParsSt }}, p
 	return items{{ if .Ctx4List.hasPagination -}}, tCount{{ end }}, nil
 }
 
-{{ if or .Ent.GetParsSt .Ent.IdField }}
-func (c *{{ .EName.Camel }}) Get(ctx context.Context, {{ if .Ent.GetParsSt }}pars *entities.{{ .EName.Camel }}GetParsSt{{ else }}{{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}{{ end }}, errNE bool) (*entities.{{ .EName.Camel }}St, error) {
-	result, err := c.r.db.{{ .EName.Camel }}Get(ctx, {{ if .Ent.GetParsSt }}pars{{ else }}{{ .Ent.IdField.Name.LCamel }}{{ end }})
+{{ if or .Ent.IdField .Ent.GetParsSt }}
+func (c *{{ .EName.Camel }}) Get(ctx context.Context{{ if .Ent.IdField }}, {{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}{{ end }}{{ if .Ent.GetParsSt }}, pars *entities.{{ .EName.Camel }}GetParsSt{{ end }}, errNE bool) (*entities.{{ .EName.Camel }}St, error) {
+	result, err := c.r.db.{{ .EName.Camel }}Get(ctx{{ if .Ent.IdField }}, {{ .Ent.IdField.Name.LCamel }}{{ end }}{{ if .Ent.GetParsSt }}, pars{{ end }})
 	if err != nil {
 		return nil, err
 	}
@@ -53,13 +55,16 @@ func (c *{{ .EName.Camel }}) {{ .Ent.IdField.Name.Camel }}Exists(ctx context.Con
 {{ end }}
 
 func (c *{{ .EName.Camel }}) Create(ctx context.Context, obj *entities.{{ .EName.Camel }}CUSt) {{ if .Ent.IdField }}({{ .Ent.IdField.Type }}, error){{ else }}error{{ end }} {
-	err := c.ValidateCU(ctx, obj{{ if .Ent.IdField }}, {{ .Ent.IdField.ZeroValue }}{{ end }})
+	var err error
+
+	{{ if or .Ent.IdField .Ent.GetParsSt -}}
+	err = c.ValidateCU(ctx, obj{{ if .Ent.IdField }}, {{ .Ent.IdField.ZeroValue }}{{ else }}, nil{{ end }})
 	if err != nil {
 		return {{ if .Ent.IdField }}{{ .Ent.IdField.ZeroValue }}, {{ end }}err
-	}
+	}{{ end }}
 
 	// create
-	{{ if .Ent.IdField }}result, {{ end }}err := c.r.db.{{ .EName.Camel }}Create(ctx, obj)
+	{{ if .Ent.IdField }}result, {{ end }}err = c.r.db.{{ .EName.Camel }}Create(ctx, obj)
 	if err != nil {
 		return {{ if .Ent.IdField }}{{ .Ent.IdField.ZeroValue }}, {{ end }}err
 	}
@@ -67,16 +72,16 @@ func (c *{{ .EName.Camel }}) Create(ctx context.Context, obj *entities.{{ .EName
 	return {{ if .Ent.IdField }}result, {{ end }}nil
 }
 
-{{ if .Ent.IdField }}
-func (c *{{ .EName.Camel }}) Update(ctx context.Context, {{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}, obj *entities.{{ .EName.Camel }}CUSt) error {
+{{ if or .Ent.IdField .Ent.GetParsSt }}
+func (c *{{ .EName.Camel }}) Update(ctx context.Context, {{ if .Ent.IdField }}{{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}{{ else }}pars *entities.{{ .EName.Camel }}GetParsSt{{ end }}, obj *entities.{{ .EName.Camel }}CUSt) error {
 	var err error
 
-	err = c.ValidateCU(ctx, obj, {{ .Ent.IdField.Name.LCamel }})
+	err = c.ValidateCU(ctx, obj, {{ if .Ent.IdField }}{{ .Ent.IdField.Name.LCamel }}{{ else }}pars{{ end }})
 	if err != nil {
 		return err
 	}
 
-	err = c.r.db.{{ .EName.Camel }}Update(ctx, {{ .Ent.IdField.Name.LCamel }}, obj)
+	err = c.r.db.{{ .EName.Camel }}Update(ctx, {{ if .Ent.IdField }}{{ .Ent.IdField.Name.LCamel }}{{ else }}pars{{ end }}, obj)
 	if err != nil {
 		return err
 	}
@@ -85,8 +90,8 @@ func (c *{{ .EName.Camel }}) Update(ctx context.Context, {{ .Ent.IdField.Name.LC
 }
 {{ end }}
 
-{{ if .Ent.IdField }}
-func (c *{{ .EName.Camel }}) Delete(ctx context.Context, {{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}) error {
-	return c.r.db.{{ .EName.Camel }}Delete(ctx, {{ .Ent.IdField.Name.LCamel }})
+{{ if or .Ent.IdField .Ent.GetParsSt }}
+func (c *{{ .EName.Camel }}) Delete(ctx context.Context, {{ if .Ent.IdField }}{{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}{{ else }}pars *entities.{{ .EName.Camel }}GetParsSt{{ end }}) error {
+	return c.r.db.{{ .EName.Camel }}Delete(ctx, {{ if .Ent.IdField }}{{ .Ent.IdField.Name.LCamel }}{{ else }}pars{{ end }})
 }
 {{ end }}

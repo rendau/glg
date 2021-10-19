@@ -25,9 +25,8 @@ func (u *St) {{ .EName.Camel }}List(ctx context.Context{{ if .Ent.ListParsSt }},
 	return u.cr.{{ .EName.Camel }}.List(ctx{{ if .Ent.ListParsSt }}, pars{{ end }})
 }
 
-{{ if or .Ent.GetParsSt .Ent.IdField }}
-func (u *St) {{ .EName.Camel }}Get(ctx context.Context,
-	{{ if .Ent.GetParsSt }}pars *entities.{{ .EName.Camel }}GetParsSt{{ else }}{{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}{{ end }}) (*entities.{{ .EName.Camel }}St, error) {
+{{ if or .Ent.IdField .Ent.GetParsSt }}
+func (u *St) {{ .EName.Camel }}Get(ctx context.Context{{ if .Ent.IdField }}, {{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}{{ end }}{{ if .Ent.GetParsSt }}, pars *entities.{{ .EName.Camel }}GetParsSt{{ end }}) (*entities.{{ .EName.Camel }}St, error) {
 	var err error
 
 	ses := u.SessionGetFromContext(ctx)
@@ -36,7 +35,7 @@ func (u *St) {{ .EName.Camel }}Get(ctx context.Context,
 		return nil, err
 	}
 
-	return u.cr.{{ .EName.Camel }}.Get(ctx, {{ if .Ent.GetParsSt }}pars{{ else }}{{ .Ent.IdField.Name.LCamel }}{{ end }}, true)
+	return u.cr.{{ .EName.Camel }}.Get(ctx{{ if .Ent.IdField }}, {{ .Ent.IdField.Name.LCamel }}{{ end }}{{ if .Ent.GetParsSt }}, pars{{ end }}, true)
 }
 {{ end }}
 
@@ -67,9 +66,9 @@ func (u *St) {{ .EName.Camel }}Create(ctx context.Context,
 	return {{ if .Ent.IdField }}result, {{ end }}nil
 }
 
-{{ if .Ent.IdField }}
+{{ if or .Ent.IdField .Ent.GetParsSt }}
 func (u *St) {{ .EName.Camel }}Update(ctx context.Context,
-	{{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}, obj *entities.{{ .EName.Camel }}CUSt) error {
+    {{ if .Ent.IdField }}{{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}{{ else }}pars *entities.{{ .EName.Camel }}GetParsSt{{ end }}, obj *entities.{{ .EName.Camel }}CUSt) error {
 	var err error
 
 	ses := u.SessionGetFromContext(ctx)
@@ -83,7 +82,7 @@ func (u *St) {{ .EName.Camel }}Update(ctx context.Context,
 	}
 	defer func() { u.db.RollbackContextTransaction(ctx) }()
 
-	err = u.cr.{{ .EName.Camel }}.Update(ctx, {{ .Ent.IdField.Name.LCamel }}, obj)
+	err = u.cr.{{ .EName.Camel }}.Update(ctx, {{ if .Ent.IdField }}{{ .Ent.IdField.Name.LCamel }}{{ else }}pars{{ end }}, obj)
 	if err != nil {
 		return err
 	}
@@ -96,9 +95,9 @@ func (u *St) {{ .EName.Camel }}Update(ctx context.Context,
 }
 {{ end }}
 
-{{ if .Ent.IdField }}
+{{ if or .Ent.IdField .Ent.GetParsSt }}
 func (u *St) {{ .EName.Camel }}Delete(ctx context.Context,
-	{{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}) error {
+    {{ if .Ent.IdField }}{{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}{{ else }}pars *entities.{{ .EName.Camel }}GetParsSt{{ end }}) error {
 	var err error
 
 	ses := u.SessionGetFromContext(ctx)
@@ -112,7 +111,7 @@ func (u *St) {{ .EName.Camel }}Delete(ctx context.Context,
 	}
 	defer func() { u.db.RollbackContextTransaction(ctx) }()
 
-	err = u.cr.{{ .EName.Camel }}.Delete(ctx, {{ .Ent.IdField.Name.LCamel }})
+	err = u.cr.{{ .EName.Camel }}.Delete(ctx, {{ if .Ent.IdField }}{{ .Ent.IdField.Name.LCamel }}{{ else }}pars{{ end }})
 	if err != nil {
 		return err
 	}
