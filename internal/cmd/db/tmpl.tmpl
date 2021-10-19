@@ -204,13 +204,19 @@ func (d *St) {{ .EName.Camel }}Create(ctx context.Context, obj *entities.{{ .ENa
 	}
 
     {{ if .Ent.IdField -}}
-        var result {{ .Ent.IdField.Type }}
+    var result {{ .Ent.IdField.Type }}
 
-    {{ end }}err = d.DbQueryRowM(ctx, `
-		insert into {{ .TName }}(`+fields+`)
-		values (`+values+`){{- if .Ent.IdField }}
-        returning {{ .Ent.IdField.JsonName }}{{- end }}
-	`, args).Scan(&result)
+    err = d.DbQueryRowM(ctx, `
+        insert into {{ .TName }}(`+fields+`)
+        values (`+values+`)
+        returning {{ .Ent.IdField.JsonName }}
+    `, args).Scan(&result)
+    {{ else -}}
+    _, err = d.DbExecM(ctx, `
+        insert into {{ .TName }}(`+fields+`)
+        values (`+values+`)
+    `, args)
+    {{ end -}}
 	if err != nil {
 		return {{ if .Ent.IdField }}{{ .Ent.IdField.ZeroValue }}, {{ end }}d.handleError(ctx, err)
 	}
