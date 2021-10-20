@@ -246,7 +246,6 @@ func (d *St) {{ .EName.Camel }}Update(ctx context.Context, {{ if .Ent.IdField }}
 
         {{ if .Ent.IdField -}}
             qWhere := `{{ .Ent.IdField.JsonName }} = {{ "${cond_" }}{{ .Ent.IdField.Name.Snake }}{{ "}" }}`
-
             args["cond_{{ .Ent.IdField.Name.Snake }}"] = {{ .Ent.IdField.Name.LCamel }}
         {{ else }}
             qWhere := `1=1`

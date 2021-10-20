@@ -146,7 +146,7 @@ func (a *St) h{{ .EName.Camel }}Create(w http.ResponseWriter, r *http.Request) {
 	{{- end }}
 }
 
-{{ if or .Ent.GetParsSt .Ent.IdField }}
+{{ if or .Ent.IdField .Ent.GetParsSt }}
 // swagger:route GET /{{ .EName.Snake }}/{{ if .Ent.IdField }}{{ "{" }}{{ .Ent.IdField.JsonName }}{{ "}" }}{{ else }}one{{ end }} {{ .EName.Snake }} h{{ .EName.Camel }}Get
 // Security:
 //   token:
@@ -175,22 +175,21 @@ func (a *St) h{{ .EName.Camel }}Get(w http.ResponseWriter, r *http.Request) {
 		Body *entities.{{ .EName.Camel }}St
 	}
 
-	{{ if .Ent.GetParsSt -}}
-		{{- if .Ent.GetParsSt.IdField }}
-			args := mux.Vars(r)
-			{{- if .Ent.IdField.IsTypeInt }}
-				{{ .Ent.IdField.Name.LCamel }}, _ := strconv.ParseInt(args["{{ .Ent.IdField.JsonName }}"], 10, 64)
-			{{- else }}
-				{{ .Ent.IdField.Name.LCamel }} := args["{{ .Ent.IdField.JsonName }}"]
-			{{- end }}
+	{{ if .Ent.IdField -}}
+		args := mux.Vars(r)
+		{{- if .Ent.IdField.IsTypeInt }}
+			{{ .Ent.IdField.Name.LCamel }}, _ := strconv.ParseInt(args["{{ .Ent.IdField.JsonName }}"], 10, 64)
+		{{- else }}
+			{{ .Ent.IdField.Name.LCamel }} := args["{{ .Ent.IdField.JsonName }}"]
+		{{- end }}
+	{{ end }}
 
-		{{ end -}}
-		qPars := r.URL.Query()
+	{{ if .Ent.GetParsSt -}}
+		{{ if len .Ent.GetParsSt.Fields }}
+			qPars := r.URL.Query()
+		{{ end }}
 
 		pars := &entities.{{ .EName.Camel }}GetParsSt{
-		{{- if .Ent.GetParsSt.IdField }}
-			{{ .Ent.GetParsSt.IdField.Name.Origin }}: {{ if .Ent.GetParsSt.IdField.IsTypePointer }}&{{ end }}{{ .Ent.IdField.Name.LCamel }},
-		{{- end }}
 		{{- range $field := .Ent.GetParsSt.Fields }}
 			{{- if not $field.IsId }}
 				{{- if getQueryParParser $field }}
@@ -199,24 +198,12 @@ func (a *St) h{{ .EName.Camel }}Get(w http.ResponseWriter, r *http.Request) {
 			{{- end }}
 		{{- end }}
 		}
-
-		result, err := a.ucs.{{ .EName.Camel }}Get(a.uGetRequestContext(r), pars)
-		if a.uHandleError(err, r, w) {
-			return
-		}
-	{{- else }}
-		args := mux.Vars(r)
-		{{- if .Ent.IdField.IsTypeInt }}
-			{{ .Ent.IdField.Name.LCamel }}, _ := strconv.ParseInt(args["{{ .Ent.IdField.JsonName }}"], 10, 64)
-		{{- else }}
-			{{ .Ent.IdField.Name.LCamel }} := args["{{ .Ent.IdField.JsonName }}"]
-		{{- end }}
-
-		result, err := a.ucs.{{ .EName.Camel }}Get(a.uGetRequestContext(r), {{ .Ent.IdField.Name.LCamel }})
-		if a.uHandleError(err, r, w) {
-			return
-		}
 	{{- end }}
+
+	result, err := a.ucs.{{ .EName.Camel }}Get(a.uGetRequestContext(r){{ if .Ent.IdField }}, {{ .Ent.IdField.Name.LCamel }}{{ end }}{{ if .Ent.GetParsSt }}, pars{{ end }})
+	if a.uHandleError(err, r, w) {
+		return
+	}
 
 	a.uRespondJSON(w, result)
 }
