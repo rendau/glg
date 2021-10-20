@@ -64,7 +64,7 @@ func (c *{{ .EName.Camel }}) Create(ctx context.Context, obj *entities.{{ .EName
 	}{{ end }}
 
 	// create
-	{{ if .Ent.IdField }}result, {{ end }}err = c.r.db.{{ .EName.Camel }}Create(ctx, obj)
+	{{ if .Ent.IdField }}result, {{ end }}err {{ if .Ent.IdField }}:{{ end }}= c.r.db.{{ .EName.Camel }}Create(ctx, obj)
 	if err != nil {
 		return {{ if .Ent.IdField }}{{ .Ent.IdField.ZeroValue }}, {{ end }}err
 	}
