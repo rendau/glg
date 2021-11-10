@@ -207,19 +207,52 @@ func (a *St) h{{ .EName.Camel }}Get(w http.ResponseWriter, r *http.Request) {
 }
 {{ end }}
 
-{{ if .Ent.IdField }}
-// swagger:route PUT /{{ .EName.Snake }}/{{ "{" }}{{ .Ent.IdField.JsonName }}{{ "}" }} {{ .EName.Snake }} h{{ .EName.Camel }}Update
+{{ if or .Ent.IdField .Ent.GetParsSt }}
+// swagger:route PUT /{{ .EName.Snake }}/{{ if .Ent.IdField }}{{ "{" }}{{ .Ent.IdField.JsonName }}{{ "}" }}{{ else }}one{{ end }} {{ .EName.Snake }} h{{ .EName.Camel }}Update
 // Security:
 //   token:
 // Responses:
 //   200:
 //   400: errRep
 func (a *St) h{{ .EName.Camel }}Update(w http.ResponseWriter, r *http.Request) {
-	args := mux.Vars(r)
-	{{- if .Ent.IdField.IsTypeInt }}
-		{{ .Ent.IdField.Name.LCamel }}, _ := strconv.ParseInt(args["{{ .Ent.IdField.JsonName }}"], 10, 64)
-	{{- else }}
-		{{ .Ent.IdField.Name.LCamel }} := args["{{ .Ent.IdField.JsonName }}"]
+	{{- if .Ent.GetParsSt }}
+		// swagger:parameters h{{ .EName.Camel }}Update
+		type docReqSt struct {
+		{{- range $field := .Ent.GetParsSt.Fields }}
+			{{- if not $field.IsId }}
+				{{- if getQueryParParser $field }}
+					// in:query
+					{{ $field.Name.Origin }} {{ $field.Type }} `json:"{{ $field.Name.Snake }}"`
+				{{- end }}
+			{{- end }}
+		{{- end }}
+		}
+
+	{{ end }}
+
+	{{ if .Ent.IdField -}}
+		args := mux.Vars(r)
+		{{- if .Ent.IdField.IsTypeInt }}
+			{{ .Ent.IdField.Name.LCamel }}, _ := strconv.ParseInt(args["{{ .Ent.IdField.JsonName }}"], 10, 64)
+		{{- else }}
+			{{ .Ent.IdField.Name.LCamel }} := args["{{ .Ent.IdField.JsonName }}"]
+		{{- end }}
+	{{ end }}
+
+	{{ if .Ent.GetParsSt -}}
+		{{ if len .Ent.GetParsSt.Fields }}
+			qPars := r.URL.Query()
+		{{ end }}
+
+		pars := &entities.{{ .EName.Camel }}GetParsSt{
+		{{- range $field := .Ent.GetParsSt.Fields }}
+			{{- if not $field.IsId }}
+				{{- if getQueryParParser $field }}
+					{{ $field.Name.Origin }}: a.{{ getQueryParParser $field }}(qPars, "{{ $field.Name.Snake }}"),
+				{{- end }}
+			{{- end }}
+		{{- end }}
+		}
 	{{- end }}
 
 	reqObj := &entities.{{ .EName.Camel }}CUSt{}
@@ -227,7 +260,7 @@ func (a *St) h{{ .EName.Camel }}Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := a.ucs.{{ .EName.Camel }}Update(a.uGetRequestContext(r), {{ .Ent.IdField.Name.LCamel }}, reqObj)
+	err := a.ucs.{{ .EName.Camel }}Update(a.uGetRequestContext(r){{ if .Ent.IdField }}, {{ .Ent.IdField.Name.LCamel }}{{ end }}{{ if .Ent.GetParsSt }}, pars{{ end }}, reqObj)
 	if a.uHandleError(err, r, w) {
 		return
 	}
@@ -236,22 +269,55 @@ func (a *St) h{{ .EName.Camel }}Update(w http.ResponseWriter, r *http.Request) {
 }
 {{ end }}
 
-{{ if .Ent.IdField }}
-// swagger:route DELETE /{{ .EName.Snake }}/{{ "{" }}{{ .Ent.IdField.JsonName }}{{ "}" }} {{ .EName.Snake }} h{{ .EName.Camel }}Delete
+{{ if or .Ent.IdField .Ent.GetParsSt }}
+// swagger:route DELETE /{{ .EName.Snake }}/{{ if .Ent.IdField }}{{ "{" }}{{ .Ent.IdField.JsonName }}{{ "}" }}{{ else }}one{{ end }} {{ .EName.Snake }} h{{ .EName.Camel }}Delete
 // Security:
 //   token:
 // Responses:
 //   200:
 //   400: errRep
 func (a *St) h{{ .EName.Camel }}Delete(w http.ResponseWriter, r *http.Request) {
-	args := mux.Vars(r)
-	{{- if .Ent.IdField.IsTypeInt }}
-		{{ .Ent.IdField.Name.LCamel }}, _ := strconv.ParseInt(args["{{ .Ent.IdField.JsonName }}"], 10, 64)
-	{{- else }}
-		{{ .Ent.IdField.Name.LCamel }} := args["{{ .Ent.IdField.JsonName }}"]
+	{{- if .Ent.GetParsSt }}
+		// swagger:parameters h{{ .EName.Camel }}Delete
+		type docReqSt struct {
+		{{- range $field := .Ent.GetParsSt.Fields }}
+			{{- if not $field.IsId }}
+				{{- if getQueryParParser $field }}
+					// in:query
+					{{ $field.Name.Origin }} {{ $field.Type }} `json:"{{ $field.Name.Snake }}"`
+				{{- end }}
+			{{- end }}
+		{{- end }}
+		}
+
+	{{ end }}
+
+	{{ if .Ent.IdField -}}
+		args := mux.Vars(r)
+		{{- if .Ent.IdField.IsTypeInt }}
+			{{ .Ent.IdField.Name.LCamel }}, _ := strconv.ParseInt(args["{{ .Ent.IdField.JsonName }}"], 10, 64)
+		{{- else }}
+			{{ .Ent.IdField.Name.LCamel }} := args["{{ .Ent.IdField.JsonName }}"]
+		{{- end }}
+	{{ end }}
+
+	{{ if .Ent.GetParsSt -}}
+		{{ if len .Ent.GetParsSt.Fields }}
+			qPars := r.URL.Query()
+		{{ end }}
+
+		pars := &entities.{{ .EName.Camel }}GetParsSt{
+		{{- range $field := .Ent.GetParsSt.Fields }}
+			{{- if not $field.IsId }}
+				{{- if getQueryParParser $field }}
+					{{ $field.Name.Origin }}: a.{{ getQueryParParser $field }}(qPars, "{{ $field.Name.Snake }}"),
+				{{- end }}
+			{{- end }}
+		{{- end }}
+		}
 	{{- end }}
 
-	err := a.ucs.{{ .EName.Camel }}Delete(a.uGetRequestContext(r), {{ .Ent.IdField.Name.LCamel }})
+	err := a.ucs.{{ .EName.Camel }}Delete(a.uGetRequestContext(r){{ if .Ent.IdField }}, {{ .Ent.IdField.Name.LCamel }}{{ end }}{{ if .Ent.GetParsSt }}, pars{{ end }})
 	if a.uHandleError(err, r, w) {
 		return
 	}
