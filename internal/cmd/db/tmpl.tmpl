@@ -237,7 +237,6 @@ func (d *St) {{ .EName.Camel }}Update(ctx context.Context, {{ if .Ent.IdField }}
 			fields += k + `=${` + k + `}`
 		}
 
-
         {{ if .Ent.IdField -}}
             qWhere := `{{ .Ent.IdField.JsonName }} = {{ "${cond_" }}{{ .Ent.IdField.Name.Snake }}{{ "}" }}`
             args["cond_{{ .Ent.IdField.Name.Snake }}"] = {{ .Ent.IdField.Name.LCamel }}
@@ -248,12 +247,12 @@ func (d *St) {{ .EName.Camel }}Update(ctx context.Context, {{ if .Ent.IdField }}
                 {{- if $field.IsTypePointer }}
                     {{- if parsFieldAssocName $.Ent $field }}
                         if pars.{{ $field.Name.Origin }} != nil {
-                            qWhere += ` and t.{{ parsFieldAssocName $.Ent $field }} = {{ "${cond_" }}{{ $field.Name.Snake }}{{ "}" }}`
+                            qWhere += ` and {{ parsFieldAssocName $.Ent $field }} = {{ "${cond_" }}{{ $field.Name.Snake }}{{ "}" }}`
                             args["cond_{{ $field.Name.Snake }}"] = *pars.{{ $field.Name.Origin }}
                         }
                     {{- end }}
                 {{ else if $field.IsId }}
-                    qWhere += `t.{{ $.Ent.IdField.JsonName }} = {{ "${cond_" }}{{ $.Ent.IdField.Name.Snake }}{{ "}" }}`
+                    qWhere += `{{ $.Ent.IdField.JsonName }} = {{ "${cond_" }}{{ $.Ent.IdField.Name.Snake }}{{ "}" }}`
                     args["cond_{{ $.Ent.IdField.Name.Snake }}"] = pars.{{ $field.Name.Origin }}
                 {{ end }}
             {{- end }}
@@ -313,12 +312,12 @@ func (d *St) {{ .EName.Camel }}Delete(ctx context.Context, {{ if .Ent.IdField }}
             {{- if $field.IsTypePointer }}
                 {{- if parsFieldAssocName $.Ent $field }}
                     if pars.{{ $field.Name.Origin }} != nil {
-                    qWhere += ` and t.{{ parsFieldAssocName $.Ent $field }} = {{ "${" }}{{ $field.Name.Snake }}{{ "}" }}`
+                    qWhere += ` and {{ parsFieldAssocName $.Ent $field }} = {{ "${" }}{{ $field.Name.Snake }}{{ "}" }}`
                     args["{{ $field.Name.Snake }}"] = *pars.{{ $field.Name.Origin }}
                     }
                 {{- end }}
             {{ else if $field.IsId }}
-                qWhere += `t.{{ $.Ent.IdField.JsonName }} = {{ "${" }}{{ $.Ent.IdField.Name.Snake }}{{ "}" }}`
+                qWhere += `{{ $.Ent.IdField.JsonName }} = {{ "${" }}{{ $.Ent.IdField.Name.Snake }}{{ "}" }}`
                 args["{{ $.Ent.IdField.Name.Snake }}"] = pars.{{ $field.Name.Origin }}
             {{ end }}
         {{- end }}
