@@ -208,7 +208,7 @@ func (a *St) h{{ .EName.Camel }}Get(w http.ResponseWriter, r *http.Request) {
 {{ end }}
 
 {{ if or .Ent.IdField .Ent.GetParsSt }}
-// swagger:route PUT /{{ .EName.Snake }}/{{ if .Ent.IdField }}{{ "{" }}{{ .Ent.IdField.JsonName }}{{ "}" }}{{ else }}one{{ end }} {{ .EName.Snake }} h{{ .EName.Camel }}Update
+// swagger:route PUT /{{ .EName.Snake }}{{ if .Ent.IdField }}/{{ "{" }}{{ .Ent.IdField.JsonName }}{{ "}" }}{{ end }} {{ .EName.Snake }} h{{ .EName.Camel }}Update
 // Security:
 //   token:
 // Responses:
@@ -270,7 +270,7 @@ func (a *St) h{{ .EName.Camel }}Update(w http.ResponseWriter, r *http.Request) {
 {{ end }}
 
 {{ if or .Ent.IdField .Ent.GetParsSt }}
-// swagger:route DELETE /{{ .EName.Snake }}/{{ if .Ent.IdField }}{{ "{" }}{{ .Ent.IdField.JsonName }}{{ "}" }}{{ else }}one{{ end }} {{ .EName.Snake }} h{{ .EName.Camel }}Delete
+// swagger:route DELETE /{{ .EName.Snake }}{{ if .Ent.IdField }}/{{ "{" }}{{ .Ent.IdField.JsonName }}{{ "}" }}{{ end }} {{ .EName.Snake }} h{{ .EName.Camel }}Delete
 // Security:
 //   token:
 // Responses:
