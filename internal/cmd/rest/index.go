@@ -120,14 +120,12 @@ func registerRoutes(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 		Ent            *entity.St
 		Ctx4List       map[string]interface{}
 		IdPathParRegex string
-		WithMetrics    bool
 	}{
 		Pr:             pr,
 		EName:          eName,
 		Ent:            ent,
 		Ctx4List:       getCtx4List(pr, eName, ent),
 		IdPathParRegex: idPathParRegex,
-		WithMetrics:    strings.Contains(side1, "mh := func("),
 	})
 	if err != nil {
 		log.Panicln(err)
