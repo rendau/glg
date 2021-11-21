@@ -120,7 +120,7 @@ func parsFieldAssocName(ent *entity.St, field *entity.FieldSt) string {
 
 	if ent.MainSt != nil {
 		for _, f := range ent.MainSt.Fields {
-			if f.Name.Camel == field.Name.Camel {
+			if f.Name.Camel == field.Name.Camel || (f.Name.Camel+"s") == field.Name.Camel {
 				return f.JsonName
 			}
 		}
@@ -128,7 +128,7 @@ func parsFieldAssocName(ent *entity.St, field *entity.FieldSt) string {
 
 	if ent.ListSt != nil {
 		for _, f := range ent.ListSt.Fields {
-			if f.Name.Camel == field.Name.Camel {
+			if f.Name.Camel == field.Name.Camel || (f.Name.Camel+"s") == field.Name.Camel {
 				return f.JsonName
 			}
 		}

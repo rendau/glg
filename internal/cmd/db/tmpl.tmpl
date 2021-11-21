@@ -75,12 +75,12 @@ func (d *St) {{ .EName.Camel }}List(ctx context.Context{{ if .Ent.ListParsSt -}}
     {{ if .Ent.ListParsSt -}}
         // filter
         {{- range $field := .Ctx4List.parsFields }}
-            {{- if $field.IsTypePointer }}
+            {{- if or $field.IsTypePointer $field.IsTypeSlice }}
                 {{- if parsFieldAssocName $.Ent $field }}
                     {{- if fieldSubQueryForIn $field $field.Name.Snake }}
                         if pars.{{ $field.Name.Origin }} != nil {
                             qWhere += ` and t.{{ parsFieldAssocName $.Ent $field }} in {{ fieldSubQueryForIn $field $field.Name.Snake }}`
-                            args["{{ $field.Name.Snake }}"] = *pars.{{ $field.Name.Origin }}
+                            args["{{ $field.Name.Snake }}"] = {{ if $field.IsTypePointer }}*{{ end }}pars.{{ $field.Name.Origin }}
                         }
                     {{- else if and $field.IsNullable $field.PVZeroValue }}
                         if pars.{{ $field.Name.Origin }} != nil {
@@ -91,7 +91,7 @@ func (d *St) {{ .EName.Camel }}List(ctx context.Context{{ if .Ent.ListParsSt -}}
                                 args["{{ $field.Name.Snake }}"] = *pars.{{ $field.Name.Origin }}
                             }
                         }
-                    {{- else }}
+                    {{- else if not $field.IsTypeSlice }}
                         if pars.{{ $field.Name.Origin }} != nil {
                             qWhere += ` and t.{{ parsFieldAssocName $.Ent $field }} = {{ "${" }}{{ $field.Name.Snake }}{{ "}" }}`
                             args["{{ $field.Name.Snake }}"] = *pars.{{ $field.Name.Origin }}
