@@ -140,7 +140,7 @@ func parsFieldAssocName(ent *entity.St, field *entity.FieldSt) string {
 func fieldSubQueryForIn(field *entity.FieldSt, name string) string {
 	switch field.Type {
 	case "[]string", "*[]string":
-		return `(select * from unnest(${` + name + `} :: string[]))`
+		return `(select * from unnest(${` + name + `} :: text[]))`
 	case "[]int", "[]int8", "[]int16", "[]int32", "[]int64",
 		"[]uint", "[]uint8", "[]uint16", "[]uint32", "[]uint64",
 		"*[]int", "*[]int8", "*[]int16", "*[]int32", "*[]int64",

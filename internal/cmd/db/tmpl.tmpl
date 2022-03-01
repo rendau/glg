@@ -104,17 +104,25 @@ func (d *St) {{ .EName.Camel }}List(ctx context.Context{{ if .Ent.ListParsSt -}}
         {{ if .Ctx4List.hasPagination -}}
             var tCount int64
 
-            if pars.PageSize > 0 {{ if .Ctx4List.onlyCountFieldName -}} || pars.{{ .Ctx4List.onlyCountFieldName }}{{- end }} {
-                err = d.DbQueryRowM(ctx, `select count(*)`+qFrom+qWhere, args).Scan(&tCount)
-                if err != nil {
-                    return nil, 0, d.handleError(ctx, err)
-                }
+            {{ if .Ctx4List.onlyCountFieldName -}}
+            if pars.{{ .Ctx4List.onlyCountFieldName }} {
+                pars.WithTotalCount = true
+            }
+            {{- end }}
 
-                {{ if .Ctx4List.onlyCountFieldName -}}
-                    if pars.{{ .Ctx4List.onlyCountFieldName }} {
-                        return nil, tCount, nil
+            if pars.PageSize > 0 {{ if .Ctx4List.onlyCountFieldName -}} || pars.{{ .Ctx4List.onlyCountFieldName }}{{- end }} {
+                if pars.WithTotalCount {
+                    err = d.DbQueryRowM(ctx, `select count(*)`+qFrom+qWhere, args).Scan(&tCount)
+                    if err != nil {
+                        return nil, 0, d.handleError(ctx, err)
                     }
-                {{- end }}
+
+                    {{ if .Ctx4List.onlyCountFieldName -}}
+                        if pars.{{ .Ctx4List.onlyCountFieldName }} {
+                            return nil, tCount, nil
+                        }
+                    {{- end }}
+                }
 
                 qOffset = ` offset ` + strconv.FormatInt(pars.Page*pars.PageSize, 10)
                 qLimit = ` limit ` + strconv.FormatInt(pars.PageSize, 10)
