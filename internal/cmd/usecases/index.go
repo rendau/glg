@@ -42,7 +42,7 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 		Pr       *project.St
 		EName    *entity.NameSt
 		Ent      *entity.St
-		Ctx4List map[string]interface{}
+		Ctx4List map[string]any
 	}{
 		Pr:       pr,
 		EName:    eName,
@@ -56,8 +56,8 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 	util.FmtFile(fPath)
 }
 
-func getCtx4List(pr *project.St, eName *entity.NameSt, ent *entity.St) map[string]interface{} {
-	result := map[string]interface{}{}
+func getCtx4List(pr *project.St, eName *entity.NameSt, ent *entity.St) map[string]any {
+	result := map[string]any{}
 
 	if ent.ListParsSt != nil {
 		for _, field := range ent.ListParsSt.Fields {

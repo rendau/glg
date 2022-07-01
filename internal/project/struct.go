@@ -1,13 +1,13 @@
 package project
 
 type St struct {
-	Uri               string
-	EntitiesDirPath   *PathSt
-	DbDirPath         *PathSt
-	InterfacesDirPath *PathSt
-	CoreDirPath       *PathSt
-	UsecasesDirPath   *PathSt
-	RestDirPath       *PathSt
+	Uri             string
+	EntitiesDirPath *PathSt
+	RepoDirPath     *PathSt
+	RepoPgDirPath   *PathSt
+	CoreDirPath     *PathSt
+	UsecasesDirPath *PathSt
+	RestDirPath     *PathSt
 }
 
 type PathSt struct {

@@ -10,13 +10,14 @@ import (
 
 {{ if or .Ent.IdField .Ent.GetParsSt }}
 func (d *St) {{ .EName.Camel }}Get(ctx context.Context{{ if .Ent.IdField }}, {{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}{{ end }}{{ if .Ent.GetParsSt }}, pars *entities.{{ .EName.Camel }}GetParsSt{{ end }}) (*entities.{{ .EName.Camel }}St, error) {
-    args := make(map[string]interface{})
+    conds := make([]string, 0)
+    args := map[string]any{}
 
     qFrom := `{{ .TName }} t`
     qWhere := `1=1`
 
     {{ if .Ent.IdField -}}
-        qWhere = `t.{{ .Ent.IdField.JsonName }} = {{ "${" }}{{ .Ent.IdField.Name.Snake }}{{ "}" }}`
+        conds = append(conds, `t.{{ .Ent.IdField.DbName }} = {{ "${" }}{{ .Ent.IdField.Name.Snake }}{{ "}" }}`)
         args["{{ .Ent.IdField.Name.Snake }}"] = {{ .Ent.IdField.Name.LCamel }}
     {{- end }}
 
@@ -25,12 +26,12 @@ func (d *St) {{ .EName.Camel }}Get(ctx context.Context{{ if .Ent.IdField }}, {{ 
             {{- if $field.IsTypePointer }}
                 {{- if parsFieldAssocName $.Ent $field }}
                     if pars.{{ $field.Name.Origin }} != nil {
-                        qWhere += ` and t.{{ parsFieldAssocName $.Ent $field }} = {{ "${" }}{{ $field.Name.Snake }}{{ "}" }}`
+                        conds = append(conds, `t.{{ parsFieldAssocName $.Ent $field }} = {{ "${" }}{{ $field.Name.Snake }}{{ "}" }}`)
                         args["{{ $field.Name.Snake }}"] = *pars.{{ $field.Name.Origin }}
                     }
                 {{- end }}
             {{ else if $field.IsId }}
-                qWhere += `t.{{ $.Ent.IdField.JsonName }} = {{ "${" }}{{ $.Ent.IdField.Name.Snake }}{{ "}" }}`
+                conds = append(conds, `t.{{ $.Ent.IdField.DbName }} = {{ "${" }}{{ $.Ent.IdField.Name.Snake }}{{ "}" }}`)
                 args["{{ $.Ent.IdField.Name.Snake }}"] = pars.{{ $field.Name.Origin }}
             {{ end }}
         {{- end }}
@@ -38,39 +39,26 @@ func (d *St) {{ .EName.Camel }}Get(ctx context.Context{{ if .Ent.IdField }}, {{ 
 
     result := &entities.{{ .EName.Camel }}St{}
 
-    err := d.DbQueryRowM(ctx, `
-        select {{ range $i, $field := .Ctx4Get.scanableFields -}}
-        {{ if gt $i 0 }}
-             , {{ end }}t.{{ $field.JsonName }}
-        {{- end }}
-        from `+qFrom+`
-        where `+qWhere+`
-        limit 1
-    `, args).Scan(
-    {{- range $field := .Ctx4Get.scanableFields }}
-        &result.{{ $field.Name.Origin }},
-    {{- end }}
-    )
+    err := d.HfGet(ctx, db.RDBGetOptions{
+        Dst:    result,
+        Tables: []string{"{{ .TName }} t"},
+        Conds:  conds,
+        Args:   args,
+    })
     if err != nil {
-        if err == pgx.ErrNoRows {
+        if errors.Is(err, dopErrs.NoRows) {
             return nil, nil
         }
-        return nil, d.handleError(ctx, err)
+        return nil, err
     }
 
     return result, nil
 }
 {{ end }}
 
-func (d *St) {{ .EName.Camel }}List(ctx context.Context{{ if .Ent.ListParsSt -}}, pars *entities.{{ .EName.Camel }}ListParsSt{{ end }}) ([]*entities.{{ .EName.Camel }}ListSt{{ if .Ctx4List.hasPagination -}}, int64{{ end }}, error) {
-    var err error
-
-    qFrom := ` from {{ .TName }} t`
-    qWhere := ` where 1=1`
-    qOffset := ``
-    qLimit := ``
-
-    args := map[string]interface{}{}
+func (d *St) {{ .EName.Camel }}List(ctx context.Context{{ if .Ent.ListParsSt -}}, pars *entities.{{ .EName.Camel }}ListParsSt{{ end }}) ([]*entities.{{ .EName.Camel }}ListSt, int64, error) {
+    conds := make([]string, 0)
+    args := map[string]any{}
 
     {{ if .Ent.ListParsSt -}}
         // filter
@@ -79,97 +67,46 @@ func (d *St) {{ .EName.Camel }}List(ctx context.Context{{ if .Ent.ListParsSt -}}
                 {{- if parsFieldAssocName $.Ent $field }}
                     {{- if fieldSubQueryForIn $field $field.Name.Snake }}
                         if pars.{{ $field.Name.Origin }} != nil {
-                            qWhere += ` and t.{{ parsFieldAssocName $.Ent $field }} in {{ fieldSubQueryForIn $field $field.Name.Snake }}`
+                            conds = append(conds, `t.{{ parsFieldAssocName $.Ent $field }} in {{ fieldSubQueryForIn $field $field.Name.Snake }}`)
                             args["{{ $field.Name.Snake }}"] = {{ if $field.IsTypePointer }}*{{ end }}pars.{{ $field.Name.Origin }}
                         }
                     {{- else if and $field.IsNullable $field.PVZeroValue }}
                         if pars.{{ $field.Name.Origin }} != nil {
                             if *pars.{{ $field.Name.Origin }} == {{ $field.PVZeroValue }} {
-                                qWhere += ` and t.{{ parsFieldAssocName $.Ent $field }} is null`
+                                conds = append(conds, `t.{{ parsFieldAssocName $.Ent $field }} is null`)
                             } else {
-                                qWhere += ` and t.{{ parsFieldAssocName $.Ent $field }} = {{ "${" }}{{ $field.Name.Snake }}{{ "}" }}`
+                                conds = append(conds, `t.{{ parsFieldAssocName $.Ent $field }} = {{ "${" }}{{ $field.Name.Snake }}{{ "}" }}`)
                                 args["{{ $field.Name.Snake }}"] = *pars.{{ $field.Name.Origin }}
                             }
                         }
                     {{- else if not $field.IsTypeSlice }}
                         if pars.{{ $field.Name.Origin }} != nil {
-                            qWhere += ` and t.{{ parsFieldAssocName $.Ent $field }} = {{ "${" }}{{ $field.Name.Snake }}{{ "}" }}`
+                            conds = append(conds, `t.{{ parsFieldAssocName $.Ent $field }} = {{ "${" }}{{ $field.Name.Snake }}{{ "}" }}`)
                             args["{{ $field.Name.Snake }}"] = *pars.{{ $field.Name.Origin }}
                         }
                     {{- end }}
                 {{- end }}
             {{- end }}
         {{- end }}
-
-        {{ if .Ctx4List.hasPagination -}}
-            var tCount int64
-
-            {{ if .Ctx4List.onlyCountFieldName -}}
-            if pars.{{ .Ctx4List.onlyCountFieldName }} {
-                pars.WithTotalCount = true
-            }
-            {{- end }}
-
-            if pars.PageSize > 0 {{ if .Ctx4List.onlyCountFieldName -}} || pars.{{ .Ctx4List.onlyCountFieldName }}{{- end }} {
-                if pars.WithTotalCount {
-                    err = d.DbQueryRowM(ctx, `select count(*)`+qFrom+qWhere, args).Scan(&tCount)
-                    if err != nil {
-                        return nil, 0, d.handleError(ctx, err)
-                    }
-
-                    {{ if .Ctx4List.onlyCountFieldName -}}
-                        if pars.{{ .Ctx4List.onlyCountFieldName }} {
-                            return nil, tCount, nil
-                        }
-                    {{- end }}
-                }
-
-                qOffset = ` offset ` + strconv.FormatInt(pars.Page*pars.PageSize, 10)
-                qLimit = ` limit ` + strconv.FormatInt(pars.PageSize, 10)
-            }
-        {{- end }}
     {{- end }}
 
-    qSelect := `
-        select {{ range $i, $field := .Ctx4List.scanableFields -}}
-        {{ if gt $i 0 }}
-             , {{ end }}t.{{ $field.JsonName }}
-        {{- end }}
-    `
+    result := make([]*entities.{{ .EName.Camel }}ListSt, 0, 100)
 
-    {{ if len .Ctx4List.fields }}
-        qOrderBy := ` order by t.{{ (index .Ctx4List.fields 0).JsonName }}`
-    {{- else }}
-        qOrderBy := ``
-    {{- end }}
-
-    rows, err := d.DbQueryM(ctx, qSelect+qFrom+qWhere+qOrderBy+qOffset+qLimit, args)
+    _, err := d.HfList(ctx, db.RDBListOptions{
+        Dst:    &result,
+        Tables: []string{`{{ .TName }} t`},
+        LPars:  pars.ListParams,
+        Conds:  conds,
+        Args:   args,
+        AllowedSorts: map[string]string{
+            "default": "t.{{ (index .Ctx4List.fields 0).DbName }}",
+        },
+    })
     if err != nil {
-        return nil{{ if .Ctx4List.hasPagination -}}, 0{{ end }}, d.handleError(ctx, err)
-    }
-    defer rows.Close()
-
-    recs := make([]*entities.{{ .EName.Camel }}ListSt, 0)
-
-    for rows.Next() {
-        rec := &entities.{{ .EName.Camel }}ListSt{}
-
-        err = rows.Scan(
-        {{- range $field := .Ctx4List.scanableFields }}
-            &rec.{{ $field.Name.Origin }},
-        {{- end }}
-        )
-        if err != nil {
-            return nil{{ if .Ctx4List.hasPagination -}}, 0{{ end }}, d.handleError(ctx, err)
-        }
-
-        recs = append(recs, rec)
-    }
-    if err = rows.Err(); err != nil {
-        return nil{{ if .Ctx4List.hasPagination -}}, 0{{ end }}, d.handleError(ctx, err)
+        return nil, err
     }
 
-    return recs{{ if .Ctx4List.hasPagination -}}, tCount{{ end }}, nil
+    return result, tCount, nil
 }
 
 {{ if .Ent.IdField }}
@@ -179,13 +116,10 @@ func (d *St) {{ .EName.Camel }}{{ .Ent.IdField.Name.Camel }}Exists(ctx context.C
 	err := d.DbQueryRow(ctx, `
 		select count(*)
 		from {{ .TName }}
-		where {{ .Ent.IdField.JsonName }} = $1
+		where {{ .Ent.IdField.DbName }} = $1
 	`, {{ .Ent.IdField.Name.LCamel }}).Scan(&cnt)
-	if err != nil {
-		return false, d.handleError(ctx, err)
-	}
 
-	return cnt > 0, nil
+	return cnt > 0, err
 }
 {{ end }}
 
@@ -280,8 +214,8 @@ func (d *St) {{ .EName.Camel }}Update(ctx context.Context, {{ if .Ent.IdField }}
 }
 {{ end }}
 
-func (d *St) {{ .EName.Camel }}GetCUArgs(obj *entities.{{ .EName.Camel }}CUSt) (map[string]interface{}, error) {
-	result := make(map[string]interface{})
+func (d *St) {{ .EName.Camel }}GetCUArgs(obj *entities.{{ .EName.Camel }}CUSt) (map[string]any, error) {
+	result := make(map[string]any)
 
     {{- range $field := .Ctx4CuArgs.fields }}
         {{- if $field.IsTypePointer }}
@@ -313,7 +247,7 @@ func (d *St) {{ .EName.Camel }}Delete(ctx context.Context, {{ if .Ent.IdField }}
             return d.handleError(ctx, err)
         }
     {{- else -}}
-        args := map[string]interface{}{}
+        args := map[string]any{}
         qWhere := `1=1`
 
         {{ range $field := .Ent.GetParsSt.Fields -}}

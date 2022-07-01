@@ -19,8 +19,8 @@ func Discover(dir string) *St {
 
 	result.Uri = getUri(dir)
 	result.EntitiesDirPath = getEntitiesDirPath(dir)
-	result.DbDirPath = getDbDirPath(dir)
-	result.InterfacesDirPath = getInterfacesDirPath(dir)
+	result.RepoDirPath = getRepoDirPath(dir)
+	result.RepoPgDirPath = getRepoPgDirPath(dir)
 	result.CoreDirPath = getCoreDirPath(dir)
 	result.UsecasesDirPath = getUsecasesDirPath(dir)
 	result.RestDirPath = getRestDirPath(dir)
@@ -64,22 +64,22 @@ func getEntitiesDirPath(dir string) *PathSt {
 	return nil
 }
 
-func getDbDirPath(dir string) *PathSt {
-	if path := filepath.Join(dir, "internal", "adapters", "db", "pg"); util.IsDirExists(path) {
+func getRepoDirPath(dir string) *PathSt {
+	if path := filepath.Join(dir, "internal", "adapters", "repo"); util.IsDirExists(path) {
 		return &PathSt{
 			Abs: path,
-			Rel: "internal/adapters/db/pg",
+			Rel: "internal/adapters/repo",
 		}
 	}
 
 	return nil
 }
 
-func getInterfacesDirPath(dir string) *PathSt {
-	if path := filepath.Join(dir, "internal", "interfaces"); util.IsDirExists(path) {
+func getRepoPgDirPath(dir string) *PathSt {
+	if path := filepath.Join(dir, "internal", "adapters", "repo", "pg"); util.IsDirExists(path) {
 		return &PathSt{
 			Abs: path,
-			Rel: "internal/interfaces",
+			Rel: "internal/adapters/repo/pg",
 		}
 	}
 
@@ -109,10 +109,10 @@ func getUsecasesDirPath(dir string) *PathSt {
 }
 
 func getRestDirPath(dir string) *PathSt {
-	if path := filepath.Join(dir, "internal", "adapters", "httpapi", "rest"); util.IsDirExists(path) {
+	if path := filepath.Join(dir, "internal", "adapters", "server", "rest"); util.IsDirExists(path) {
 		return &PathSt{
 			Abs: path,
-			Rel: "internal/adapters/httpapi/rest",
+			Rel: "internal/adapters/server/rest",
 		}
 	}
 

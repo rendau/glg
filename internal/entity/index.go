@@ -14,6 +14,7 @@ import (
 
 var (
 	jsonTagRegexp = regexp.MustCompile(`(?iU)json:"([^"]*)"`)
+	dbTagRegexp   = regexp.MustCompile(`(?iU)db:"([^"]*)"`)
 	glgTagRegexp  = regexp.MustCompile(`(?iU)glg:"([^"]*)"`)
 )
 
@@ -129,6 +130,7 @@ func ParseField(f *ast.Field) (*FieldSt, bool, bool) {
 	if f.Tag != nil {
 		result.Tag = f.Tag.Value
 		result.JsonName = TagParseJsonName(result.Tag)
+		result.DbName = TagParseDbName(result.Tag)
 
 		if TagHasGlgId(result.Tag) {
 			isIdField = true
@@ -173,6 +175,20 @@ func ParseType(expr ast.Expr) string {
 
 func TagParseJsonName(tag string) string {
 	if fRes := jsonTagRegexp.FindStringSubmatch(tag); len(fRes) > 1 {
+		for _, w := range strings.Split(fRes[1], ",") {
+			if w == "" || w == "-" || w == "omitempty" {
+				continue
+			}
+
+			return w
+		}
+	}
+
+	return ""
+}
+
+func TagParseDbName(tag string) string {
+	if fRes := dbTagRegexp.FindStringSubmatch(tag); len(fRes) > 1 {
 		for _, w := range strings.Split(fRes[1], ",") {
 			if w == "" || w == "-" || w == "omitempty" {
 				continue

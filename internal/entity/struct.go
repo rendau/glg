@@ -38,6 +38,7 @@ type FieldSt struct {
 	IsEmbedded    bool
 	Tag           string
 	JsonName      string
+	DbName        string
 	ZeroValue     string
 	PVZeroValue   string
 	IsId          bool

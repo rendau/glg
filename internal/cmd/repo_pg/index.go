@@ -1,4 +1,4 @@
-package db
+package repo_pg
 
 import (
 	_ "embed"
@@ -20,8 +20,8 @@ var tmp string
 func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 	var err error
 
-	if pr.DbDirPath == nil {
-		fmt.Println("Db destination dir not found")
+	if pr.RepoPgDirPath == nil {
+		fmt.Println("'repo/pg' destination dir not found")
 		return
 	}
 
@@ -34,7 +34,7 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 		log.Panicln(err)
 	}
 
-	fPath := filepath.Join(pr.DbDirPath.Abs, eName.Snake+".go")
+	fPath := filepath.Join(pr.RepoPgDirPath.Abs, eName.Snake+".go")
 
 	outF, err := os.Create(fPath)
 	if err != nil {
@@ -47,9 +47,9 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 		EName      *entity.NameSt
 		TName      string
 		Ent        *entity.St
-		Ctx4Get    map[string]interface{}
-		Ctx4List   map[string]interface{}
-		Ctx4CuArgs map[string]interface{}
+		Ctx4Get    map[string]any
+		Ctx4List   map[string]any
+		Ctx4CuArgs map[string]any
 	}{
 		Pr:         pr,
 		EName:      eName,
@@ -66,16 +66,16 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 	util.FmtFile(fPath)
 }
 
-func getCtx4Get(pr *project.St, eName *entity.NameSt, ent *entity.St) map[string]interface{} {
-	result := map[string]interface{}{}
+func getCtx4Get(pr *project.St, eName *entity.NameSt, ent *entity.St) map[string]any {
+	result := map[string]any{}
 
 	result["scanableFields"] = scanableFields(ent.MainSt.Fields)
 
 	return result
 }
 
-func getCtx4List(pr *project.St, eName *entity.NameSt, ent *entity.St) map[string]interface{} {
-	result := map[string]interface{}{}
+func getCtx4List(pr *project.St, eName *entity.NameSt, ent *entity.St) map[string]any {
+	result := map[string]any{}
 
 	if ent.ListParsSt != nil {
 		for _, field := range ent.ListParsSt.Fields {
@@ -101,8 +101,8 @@ func getCtx4List(pr *project.St, eName *entity.NameSt, ent *entity.St) map[strin
 	return result
 }
 
-func getCtx4CuArgs(pr *project.St, eName *entity.NameSt, ent *entity.St) map[string]interface{} {
-	result := map[string]interface{}{}
+func getCtx4CuArgs(pr *project.St, eName *entity.NameSt, ent *entity.St) map[string]any {
+	result := map[string]any{}
 
 	result["fields"] = ent.CuSt.Fields
 
@@ -121,7 +121,7 @@ func parsFieldAssocName(ent *entity.St, field *entity.FieldSt) string {
 	if ent.MainSt != nil {
 		for _, f := range ent.MainSt.Fields {
 			if f.Name.Camel == field.Name.Camel || (f.Name.Camel+"s") == field.Name.Camel {
-				return f.JsonName
+				return f.DbName
 			}
 		}
 	}
@@ -129,7 +129,7 @@ func parsFieldAssocName(ent *entity.St, field *entity.FieldSt) string {
 	if ent.ListSt != nil {
 		for _, f := range ent.ListSt.Fields {
 			if f.Name.Camel == field.Name.Camel || (f.Name.Camel+"s") == field.Name.Camel {
-				return f.JsonName
+				return f.DbName
 			}
 		}
 	}
