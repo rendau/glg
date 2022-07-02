@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"strings"
 	"text/template"
 
 	"github.com/rendau/glg/internal/entity"
@@ -23,23 +22,23 @@ var tmp string
 func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 	// var err error
 
-	if pr.InterfacesDirPath == nil {
+	if pr.RepoDirPath == nil {
 		fmt.Println("Interfaces dir not found")
 		return
 	}
 
-	fPath := filepath.Join(pr.InterfacesDirPath.Abs, "db.go")
+	fPath := filepath.Join(pr.RepoDirPath.Abs, "interfaces.go")
 
 	if !util.IsFileExists(fPath) {
-		fmt.Println("Db-interface file not found")
+		fmt.Println("Repo-interface file not found")
 		return
 	}
 
 	removeCurrentMethods(fPath, eName)
 
-	side1, side2, ok := util.DivideInterfaceEndPosSides(fPath, "Db")
+	side1, side2, ok := util.DivideInterfaceEndPosSides(fPath, "Repo")
 	if !ok || side1 == "" || side2 == "" {
-		fmt.Println("Fail to register module in db-interfaces. Not found 'Db' interface type in `" + fPath + "` file")
+		fmt.Println("Fail to register module in db-interfaces. Not found 'Repo' interface type in `" + fPath + "` file")
 	}
 
 	t, err := template.New("interfaces.tmp").Parse(tmp)
@@ -55,10 +54,9 @@ func Make(pr *project.St, eName *entity.NameSt, ent *entity.St) {
 		Ent      *entity.St
 		Ctx4List map[string]any
 	}{
-		Pr:       pr,
-		EName:    eName,
-		Ent:      ent,
-		Ctx4List: getCtx4List(pr, eName, ent),
+		Pr:    pr,
+		EName: eName,
+		Ent:   ent,
 	})
 	if err != nil {
 		log.Panicln(err)
@@ -92,19 +90,4 @@ func removeCurrentMethods(fPath string, eName *entity.NameSt) {
 	}
 
 	util.FmtFile(fPath)
-}
-
-func getCtx4List(pr *project.St, eName *entity.NameSt, ent *entity.St) map[string]any {
-	result := map[string]any{}
-
-	if ent.ListParsSt != nil {
-		for _, field := range ent.ListParsSt.Fields {
-			if strings.Contains(strings.ToLower(field.Type), "pagination") {
-				result["hasPagination"] = true
-				break
-			}
-		}
-	}
-
-	return result
 }

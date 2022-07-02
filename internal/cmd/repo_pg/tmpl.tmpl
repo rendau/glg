@@ -10,49 +10,59 @@ import (
 
 {{ if or .Ent.IdField .Ent.GetParsSt }}
 func (d *St) {{ .EName.Camel }}Get(ctx context.Context{{ if .Ent.IdField }}, {{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}{{ end }}{{ if .Ent.GetParsSt }}, pars *entities.{{ .EName.Camel }}GetParsSt{{ end }}) (*entities.{{ .EName.Camel }}St, error) {
-    conds := make([]string, 0)
-    args := map[string]any{}
-
-    qFrom := `{{ .TName }} t`
-    qWhere := `1=1`
-
-    {{ if .Ent.IdField -}}
-        conds = append(conds, `t.{{ .Ent.IdField.DbName }} = {{ "${" }}{{ .Ent.IdField.Name.Snake }}{{ "}" }}`)
-        args["{{ .Ent.IdField.Name.Snake }}"] = {{ .Ent.IdField.Name.LCamel }}
-    {{- end }}
-
     {{ if .Ent.GetParsSt }}
-        {{- range $field := .Ent.GetParsSt.Fields }}
-            {{- if $field.IsTypePointer }}
-                {{- if parsFieldAssocName $.Ent $field }}
-                    if pars.{{ $field.Name.Origin }} != nil {
-                        conds = append(conds, `t.{{ parsFieldAssocName $.Ent $field }} = {{ "${" }}{{ $field.Name.Snake }}{{ "}" }}`)
-                        args["{{ $field.Name.Snake }}"] = *pars.{{ $field.Name.Origin }}
-                    }
-                {{- end }}
-            {{ else if $field.IsId }}
-                conds = append(conds, `t.{{ $.Ent.IdField.DbName }} = {{ "${" }}{{ $.Ent.IdField.Name.Snake }}{{ "}" }}`)
-                args["{{ $.Ent.IdField.Name.Snake }}"] = pars.{{ $field.Name.Origin }}
-            {{ end }}
+        conds := make([]string, 0)
+        args := map[string]any{}
+
+        {{ if .Ent.IdField -}}
+            conds = append(conds, `t.{{ .Ent.IdField.DbName }} = {{ "${" }}{{ .Ent.IdField.Name.Snake }}{{ "}" }}`)
+            args["{{ .Ent.IdField.Name.Snake }}"] = {{ .Ent.IdField.Name.LCamel }}
         {{- end }}
-    {{- end }}
 
-    result := &entities.{{ .EName.Camel }}St{}
+        {{ if .Ent.GetParsSt }}
+            {{- range $field := .Ent.GetParsSt.Fields }}
+                {{- if $field.IsTypePointer }}
+                    {{- if parsFieldAssocName $.Ent $field }}
+                        if pars.{{ $field.Name.Origin }} != nil {
+                            conds = append(conds, `t.{{ parsFieldAssocName $.Ent $field }} = {{ "${" }}{{ $field.Name.Snake }}{{ "}" }}`)
+                            args["{{ $field.Name.Snake }}"] = *pars.{{ $field.Name.Origin }}
+                        }
+                    {{- end }}
+                {{ else if $field.IsId }}
+                    conds = append(conds, `t.{{ $.Ent.IdField.DbName }} = {{ "${" }}{{ $.Ent.IdField.Name.Snake }}{{ "}" }}`)
+                    args["{{ $.Ent.IdField.Name.Snake }}"] = pars.{{ $field.Name.Origin }}
+                {{ end }}
+            {{- end }}
+        {{- end }}
 
-    err := d.HfGet(ctx, db.RDBGetOptions{
-        Dst:    result,
-        Tables: []string{"{{ .TName }} t"},
-        Conds:  conds,
-        Args:   args,
-    })
-    if err != nil {
+        result := &entities.{{ .EName.Camel }}St{}
+
+        err := d.HfGet(ctx, db.RDBGetOptions{
+            Dst:    result,
+            Tables: []string{"{{ .TName }} t"},
+            Conds:  conds,
+            Args:   args,
+        })
         if errors.Is(err, dopErrs.NoRows) {
-            return nil, nil
+            err = nil
         }
-        return nil, err
-    }
 
-    return result, nil
+        return result, nil
+    {{- else -}}
+        result := &entities.{{ .EName.Camel }}St{}
+
+        err := d.HfGet(ctx, db.RDBGetOptions{
+            Dst:    result,
+            Tables: []string{"{{ .TName }}"},
+            Conds:  []string{"{{ .Ent.IdField.DbName }} = {{ "${" }}{{ .Ent.IdField.Name.Snake }}{{ "}" }}"},
+            Args:   map[string]any{"{{ .Ent.IdField.Name.Snake }}": {{ .Ent.IdField.Name.LCamel }}},
+        })
+        if errors.Is(err, dopErrs.NoRows) {
+            err = nil
+        }
+
+        return result, err
+    {{- end }}
 }
 {{ end }}
 
@@ -92,184 +102,122 @@ func (d *St) {{ .EName.Camel }}List(ctx context.Context{{ if .Ent.ListParsSt -}}
 
     result := make([]*entities.{{ .EName.Camel }}ListSt, 0, 100)
 
-    _, err := d.HfList(ctx, db.RDBListOptions{
+    tCount, err := d.HfList(ctx, db.RDBListOptions{
         Dst:    &result,
         Tables: []string{`{{ .TName }} t`},
-        LPars:  pars.ListParams,
+        {{ if .Ent.ListParsSt }}LPars:  pars.ListParams,{{ end }}
         Conds:  conds,
         Args:   args,
         AllowedSorts: map[string]string{
             "default": "t.{{ (index .Ctx4List.fields 0).DbName }}",
         },
     })
-    if err != nil {
-        return nil, err
-    }
 
-    return result, tCount, nil
+    return result, tCount, err
 }
 
 {{ if .Ent.IdField }}
 func (d *St) {{ .EName.Camel }}{{ .Ent.IdField.Name.Camel }}Exists(ctx context.Context, {{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}) (bool, error) {
-	var cnt int
+    var cnt int
 
-	err := d.DbQueryRow(ctx, `
-		select count(*)
-		from {{ .TName }}
-		where {{ .Ent.IdField.DbName }} = $1
-	`, {{ .Ent.IdField.Name.LCamel }}).Scan(&cnt)
+    err := d.DbQueryRow(ctx, `
+        select count(*)
+        from {{ .TName }}
+        where {{ .Ent.IdField.DbName }} = $1
+    `, {{ .Ent.IdField.Name.LCamel }}).Scan(&cnt)
 
-	return cnt > 0, err
+    return cnt > 0, err
 }
 {{ end }}
 
 func (d *St) {{ .EName.Camel }}Create(ctx context.Context, obj *entities.{{ .EName.Camel }}CUSt) {{ if .Ent.IdField }}({{ .Ent.IdField.Type }}, error){{ else }}error{{ end }} {
-    args, err := d.{{ .EName.Camel }}GetCUArgs(obj)
-	if err != nil {
-		return {{ if .Ent.IdField }}{{ .Ent.IdField.ZeroValue }}, {{ end }}err
-	}
-
-	var fields string
-	var values string
-
-	for k := range args {
-		if fields != `` {
-			fields += `,`
-			values += `,`
-		}
-		fields += k
-		values += `${` + k + `}`
-	}
-
     {{ if .Ent.IdField -}}
-    var result {{ .Ent.IdField.Type }}
+        var result {{ .Ent.IdField.Type }}
 
-    err = d.DbQueryRowM(ctx, `
-        insert into {{ .TName }}(`+fields+`)
-        values (`+values+`)
-        returning {{ .Ent.IdField.JsonName }}
-    `, args).Scan(&result)
-    {{ else -}}
-    _, err = d.DbExecM(ctx, `
-        insert into {{ .TName }}(`+fields+`)
-        values (`+values+`)
-    `, args)
-    {{ end -}}
-	if err != nil {
-		return {{ if .Ent.IdField }}{{ .Ent.IdField.ZeroValue }}, {{ end }}d.handleError(ctx, err)
-	}
+        err := d.HfCreate(ctx, db.RDBCreateOptions{
+            Table:  "{{ .TName }}",
+            Obj:    obj,
+            RetCol: "{{ .Ent.IdField.DbName }}",
+            RetV:   &result,
+        })
 
-	return {{ if .Ent.IdField }}result, {{ end }}nil
+        return result, err
+    {{- else -}}
+        return d.HfCreate(ctx, db.RDBCreateOptions{
+            Table:  "{{ .TName }}",
+            Obj:    obj,
+        })
+    {{- end }}
 }
 
 {{ if or .Ent.IdField .Ent.GetParsSt }}
 func (d *St) {{ .EName.Camel }}Update(ctx context.Context, {{ if .Ent.IdField }}{{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}{{ else }}pars *entities.{{ .EName.Camel }}GetParsSt{{ end }}, obj *entities.{{ .EName.Camel }}CUSt) error {
-	args, err := d.{{ .EName.Camel }}GetCUArgs(obj)
-	if err != nil {
-		return err
-	}
-
-	if len(args) > 0 {
-		var fields string
-
-		for k := range args {
-			if fields != `` {
-				fields += `,`
-			}
-			fields += k + `=${` + k + `}`
-		}
-
-        {{ if .Ent.IdField -}}
-            qWhere := `{{ .Ent.IdField.JsonName }} = {{ "${cond_" }}{{ .Ent.IdField.Name.Snake }}{{ "}" }}`
-            args["cond_{{ .Ent.IdField.Name.Snake }}"] = {{ .Ent.IdField.Name.LCamel }}
-        {{ else }}
-            qWhere := `1=1`
-
-            {{ range $field := .Ent.GetParsSt.Fields -}}
-                {{- if $field.IsTypePointer }}
-                    {{- if parsFieldAssocName $.Ent $field }}
-                        if pars.{{ $field.Name.Origin }} != nil {
-                            qWhere += ` and {{ parsFieldAssocName $.Ent $field }} = {{ "${cond_" }}{{ $field.Name.Snake }}{{ "}" }}`
-                            args["cond_{{ $field.Name.Snake }}"] = *pars.{{ $field.Name.Origin }}
-                        }
-                    {{- end }}
-                {{ else if $field.IsId }}
-                    qWhere += `{{ $.Ent.IdField.JsonName }} = {{ "${cond_" }}{{ $.Ent.IdField.Name.Snake }}{{ "}" }}`
-                    args["cond_{{ $.Ent.IdField.Name.Snake }}"] = pars.{{ $field.Name.Origin }}
-                {{ end }}
-            {{- end }}
-        {{- end }}
-
-		_, err = d.DbExecM(ctx, `
-			update {{ .TName }}
-			set `+fields+`
-			where `+qWhere+`
-		`, args)
-		if err != nil {
-			return d.handleError(ctx, err)
-		}
-	}
-
-	return nil
-}
-{{ end }}
-
-func (d *St) {{ .EName.Camel }}GetCUArgs(obj *entities.{{ .EName.Camel }}CUSt) (map[string]any, error) {
-	result := make(map[string]any)
-
-    {{- range $field := .Ctx4CuArgs.fields }}
-        {{- if $field.IsTypePointer }}
-
-            {{ if and $field.IsNullable $field.PVZeroValue (fieldPgTypeNullValue $field) -}}
-                if obj.{{ $field.Name.Origin }} != nil {
-                    if *obj.{{ $field.Name.Origin }} == {{ $field.PVZeroValue }} {
-                        result["{{ $field.Name.Snake }}"] = {{ fieldPgTypeNullValue $field }}
-                    } else {
-                        result["{{ $field.Name.Snake }}"] = *obj.{{ $field.Name.Origin }}
-                    }
-                }
-            {{- else }}
-                if obj.{{ $field.Name.Origin }} != nil {
-                    result["{{ $field.Name.Snake }}"] = *obj.{{ $field.Name.Origin }}
-                }
-            {{- end }}
-        {{- end }}
-    {{- end }}
-
-	return result, nil
-}
-
-{{ if or .Ent.IdField .Ent.GetParsSt }}
-func (d *St) {{ .EName.Camel }}Delete(ctx context.Context, {{ if .Ent.IdField }}{{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}{{ else }}pars *entities.{{ .EName.Camel }}GetParsSt{{ end }}) error {
     {{ if .Ent.IdField -}}
-        _, err := d.DbExec(ctx, `delete from {{ .TName }} where {{ .Ent.IdField.JsonName }} = $1`, {{ .Ent.IdField.Name.LCamel }})
-        if err != nil {
-            return d.handleError(ctx, err)
-        }
+        return d.HfUpdate(ctx, db.RDBUpdateOptions{
+            Table: "{{ .TName }}",
+            Obj:   obj,
+            Conds: []string{"{{ .Ent.IdField.DbName }} = ${cond_id}"},
+            Args:  map[string]any{"cond_id": {{ .Ent.IdField.Name.LCamel }}},
+        })
     {{- else -}}
+        conds := make([]string, 0)
         args := map[string]any{}
-        qWhere := `1=1`
 
         {{ range $field := .Ent.GetParsSt.Fields -}}
             {{- if $field.IsTypePointer }}
                 {{- if parsFieldAssocName $.Ent $field }}
                     if pars.{{ $field.Name.Origin }} != nil {
-                    qWhere += ` and {{ parsFieldAssocName $.Ent $field }} = {{ "${" }}{{ $field.Name.Snake }}{{ "}" }}`
-                    args["{{ $field.Name.Snake }}"] = *pars.{{ $field.Name.Origin }}
+                        conds = append(conds, `{{ parsFieldAssocName $.Ent $field }} = {{ "${cond_" }}{{ $field.Name.Snake }}{{ "}" }}`)
+                        args["cond_{{ $field.Name.Snake }}"] = *pars.{{ $field.Name.Origin }}
                     }
                 {{- end }}
             {{ else if $field.IsId }}
-                qWhere += `{{ $.Ent.IdField.JsonName }} = {{ "${" }}{{ $.Ent.IdField.Name.Snake }}{{ "}" }}`
-                args["{{ $.Ent.IdField.Name.Snake }}"] = pars.{{ $field.Name.Origin }}
+                conds = append(conds, `{{ $.Ent.IdField.DbName }} = {{ "${cond_" }}{{ $.Ent.IdField.Name.Snake }}{{ "}" }}`)
+                args["cond_{{ $.Ent.IdField.Name.Snake }}"] = pars.{{ $field.Name.Origin }}
             {{ end }}
         {{- end }}
 
-        _, err := d.DbExecM(ctx, `delete from {{ .TName }} where `+qWhere, args)
-        if err != nil {
-            return d.handleError(ctx, err)
-        }
+        return d.HfUpdate(ctx, db.RDBUpdateOptions{
+            Table: "{{ .TName }}",
+            Obj:   obj,
+            Conds: conds,
+            Args:  args,
+        })
     {{- end }}
+}
+{{ end }}
 
-	return nil
+{{ if or .Ent.IdField .Ent.GetParsSt }}
+func (d *St) {{ .EName.Camel }}Delete(ctx context.Context, {{ if .Ent.IdField }}{{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}{{ else }}pars *entities.{{ .EName.Camel }}GetParsSt{{ end }}) error {
+    {{ if .Ent.IdField -}}
+        return d.HfDelete(ctx, db.RDBDeleteOptions{
+            Table: "{{ .TName }}",
+            Conds: []string{"{{ .Ent.IdField.DbName }} = ${cond_id}"},
+            Args:  map[string]any{"cond_id": {{ .Ent.IdField.Name.LCamel }}},
+        })
+    {{- else -}}
+        conds := make([]string, 0)
+        args := map[string]any{}
+
+        {{ range $field := .Ent.GetParsSt.Fields -}}
+            {{- if $field.IsTypePointer }}
+                {{- if parsFieldAssocName $.Ent $field }}
+                    if pars.{{ $field.Name.Origin }} != nil {
+                        conds = append(conds, `{{ parsFieldAssocName $.Ent $field }} = {{ "${cond_" }}{{ $field.Name.Snake }}{{ "}" }}`)
+                        args["cond_{{ $field.Name.Snake }}"] = *pars.{{ $field.Name.Origin }}
+                    }
+                {{- end }}
+            {{ else if $field.IsId }}
+                conds = append(conds, `{{ $.Ent.IdField.DbName }} = {{ "${cond_" }}{{ $.Ent.IdField.Name.Snake }}{{ "}" }}`)
+                args["cond_{{ $.Ent.IdField.Name.Snake }}"] = pars.{{ $field.Name.Origin }}
+            {{ end }}
+        {{- end }}
+
+        return d.HfDelete(ctx, db.RDBDeleteOptions{
+            Table: "{{ .TName }}",
+            Conds: conds,
+            Args:  args,
+        })
+    {{- end }}
 }
 {{ end }}

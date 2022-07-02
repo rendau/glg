@@ -78,20 +78,6 @@ func getCtx4List(pr *project.St, eName *entity.NameSt, ent *entity.St) map[strin
 	result := map[string]any{}
 
 	if ent.ListParsSt != nil {
-		for _, field := range ent.ListParsSt.Fields {
-			if strings.Contains(strings.ToLower(field.Type), "pagination") {
-				result["hasPagination"] = true
-				break
-			}
-		}
-
-		for _, field := range ent.ListParsSt.Fields {
-			if field.Name.Snake == "only_count" && field.Type == "bool" {
-				result["onlyCountFieldName"] = field.Name.Origin
-				break
-			}
-		}
-
 		result["parsFields"] = ent.ListParsSt.Fields
 	}
 
