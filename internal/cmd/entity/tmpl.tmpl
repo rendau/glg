@@ -1,0 +1,25 @@
+package entities
+
+import (
+	"github.com/rendau/dop/dopTypes"
+)
+
+type {{ .EName.Camel }}St struct {
+	Id   int64  `json:"id" db:"id"`
+	Name string `json:"name" db:"name"`
+}
+
+type {{ .EName.Camel }}ListSt struct {
+	{{ .EName.Camel }}St
+}
+
+type {{ .EName.Camel }}ListParsSt struct {
+	dopTypes.ListParams
+
+	Ids  *[]int64  `json:"ids" form:"ids"`
+	Name *string   `json:"name" form:"name"`
+}
+
+type {{ .EName.Camel }}CUSt struct {
+	Name *string `json:"name" db:"name"`
+}
