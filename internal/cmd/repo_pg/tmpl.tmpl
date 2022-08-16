@@ -44,6 +44,7 @@ func (d *St) {{ .EName.Camel }}Get(ctx context.Context{{ if .Ent.IdField }}, {{ 
             Args:   args,
         })
         if errors.Is(err, dopErrs.NoRows) {
+            result = nil
             err = nil
         }
 
@@ -58,6 +59,7 @@ func (d *St) {{ .EName.Camel }}Get(ctx context.Context{{ if .Ent.IdField }}, {{ 
             Args:   map[string]any{"{{ .Ent.IdField.Name.Snake }}": {{ .Ent.IdField.Name.LCamel }}},
         })
         if errors.Is(err, dopErrs.NoRows) {
+            result = nil
             err = nil
         }
 
