@@ -11,7 +11,7 @@ import (
 // @Tags     {{ .EName.Snake }}
 // @Param    query  query  entities.{{ .EName.Camel }}ListParsSt  false  "query"
 // @Produce  json
-// @Success  200  {object}  dopTypes.{{ if .Ent.ListParsSt -}}PaginatedListRep{{ else }}ListRep{{ end }}{results=[]entities.{{ .EName.Camel }}ListSt}
+// @Success  200  {object}  dopTypes.{{ if .Ent.ListParsSt -}}PaginatedListRep{{ else }}ListRep{{ end }}{results=[]entities.{{ .Ent.ListSt.Name.Origin }}}
 // @Failure  400  {object}  dopTypes.ErrRep
 func (o *St) h{{ .EName.Camel }}List(c *gin.Context) {
     {{ if .Ent.ListParsSt -}}

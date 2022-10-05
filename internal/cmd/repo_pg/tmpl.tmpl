@@ -68,7 +68,7 @@ func (d *St) {{ .EName.Camel }}Get(ctx context.Context{{ if .Ent.IdField }}, {{ 
 }
 {{ end }}
 
-func (d *St) {{ .EName.Camel }}List(ctx context.Context{{ if .Ent.ListParsSt -}}, pars *entities.{{ .EName.Camel }}ListParsSt{{ end }}) ([]*entities.{{ .EName.Camel }}ListSt, int64, error) {
+func (d *St) {{ .EName.Camel }}List(ctx context.Context{{ if .Ent.ListParsSt -}}, pars *entities.{{ .EName.Camel }}ListParsSt{{ end }}) ([]*entities.{{ .Ent.ListSt.Name.Origin }}, int64, error) {
     conds := make([]string, 0)
     args := map[string]any{}
 
@@ -102,7 +102,7 @@ func (d *St) {{ .EName.Camel }}List(ctx context.Context{{ if .Ent.ListParsSt -}}
         {{- end }}
     {{- end }}
 
-    result := make([]*entities.{{ .EName.Camel }}ListSt, 0, 100)
+    result := make([]*entities.{{ .Ent.ListSt.Name.Origin }}, 0, 100)
 
     tCount, err := d.HfList(ctx, db.RDBListOptions{
         Dst:    &result,

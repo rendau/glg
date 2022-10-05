@@ -28,6 +28,10 @@ func Parse(dirPath string, eName *NameSt) *St {
 
 	result := ParseF(f, eName)
 
+	if result.ListSt == nil && result.MainSt != nil {
+		result.ListSt = result.MainSt
+	}
+
 	FindOutIdField(result)
 
 	SyncNullableFields(result)

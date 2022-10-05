@@ -1,6 +1,6 @@
 // {{ .EName.Snake }}{{ if or .Ent.IdField .Ent.GetParsSt }}
 {{ .EName.Camel }}Get(ctx context.Context{{ if .Ent.IdField }}, {{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}{{ end }}{{ if .Ent.GetParsSt }}, pars *entities.{{ .EName.Camel }}GetParsSt{{ end }}) (*entities.{{ .EName.Camel }}St, error){{ end }}
-{{ .EName.Camel }}List(ctx context.Context{{ if .Ent.ListParsSt }}, pars *entities.{{ .EName.Camel }}ListParsSt{{ end }}) ([]*entities.{{ .EName.Camel }}ListSt, int64, error){{ if .Ent.IdField }}
+{{ .EName.Camel }}List(ctx context.Context{{ if .Ent.ListParsSt }}, pars *entities.{{ .EName.Camel }}ListParsSt{{ end }}) ([]*entities.{{ .Ent.ListSt.Name.Origin }}, int64, error){{ if .Ent.IdField }}
 {{ .EName.Camel }}{{ .Ent.IdField.Name.Camel }}Exists(ctx context.Context, {{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}) (bool, error){{ end }}
 {{ .EName.Camel }}Create(ctx context.Context, obj *entities.{{ .EName.Camel }}CUSt) {{ if .Ent.IdField }}({{ .Ent.IdField.Type }}, error){{ else }}error{{ end }}{{ if or .Ent.IdField .Ent.GetParsSt }}
 {{ .EName.Camel }}Update(ctx context.Context, {{ if .Ent.IdField }}{{ .Ent.IdField.Name.LCamel }} {{ .Ent.IdField.Type }}{{ else }}pars *entities.{{ .EName.Camel }}GetParsSt{{ end }}, obj *entities.{{ .EName.Camel }}CUSt) error
