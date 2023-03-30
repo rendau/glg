@@ -7,7 +7,7 @@ import (
 
 func (u *St) {{ .EName.Camel }}List(ctx context.Context{{ if .Ent.ListParsSt }},
 	pars *entities.{{ .EName.Camel }}ListParsSt{{ end }}) ([]*entities.{{ .Ent.ListSt.Name.Origin }}, int64, error) {
-	var err error
+	{{ if not .Ent.ListParsSt }}// {{ end }}var err error
 
 	// ses := u.SessionGetFromContext(ctx)
   //
@@ -15,9 +15,11 @@ func (u *St) {{ .EName.Camel }}List(ctx context.Context{{ if .Ent.ListParsSt }},
 	// 	return nil, 0, err
 	// }
 
+	{{- if .Ent.ListParsSt }}
 	if err = dopTools.RequirePageSize(pars.ListParams, cns.MaxPageSize); err != nil {
 		return nil, 0, err
 	}
+	{{- end }}
 
 	return u.cr.{{ .EName.Camel }}.List(ctx{{ if .Ent.ListParsSt }}, pars{{ end }})
 }
