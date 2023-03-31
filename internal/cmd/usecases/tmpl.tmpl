@@ -15,7 +15,7 @@ func (u *St) {{ .EName.Camel }}List(ctx context.Context{{ if .Ent.ListParsSt }},
 	// 	return nil, 0, err
 	// }
 
-	{{- if .Ent.ListParsSt }}
+	{{ if .Ent.ListParsSt -}}
 	if err = dopTools.RequirePageSize(pars.ListParams, cns.MaxPageSize); err != nil {
 		return nil, 0, err
 	}
